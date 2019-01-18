@@ -7,7 +7,7 @@ class GUI:
     def __init__(self, master):
         global coords, image
         self.master = master
-        self.master.geometry("600x250")
+        self.master.geometry("800x250")  ## gui 크기  가로 x 세로
         master.title("ScreenShotter 0.0.1")
         
         self.label = tk.Label(master)

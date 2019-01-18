@@ -1,4 +1,12 @@
-# ScreenShotter
+# Color_Capture
 
-This is a simple screen shot application, it allows you to select the area you wish to screenshot.
-Essentially a snipping tool clone with less features.
+1. capture
+- select area
+- save
+- get X,Y
+- make thumnail
+- save thumnail
+- show thumnail
+
+
+2. color analyze
