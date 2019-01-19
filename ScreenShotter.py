@@ -2,44 +2,69 @@ from PIL import ImageGrab
 import tkinter as tk
 import pyautogui
 import win32api
-  
+
+
+
 class GUI:
     def __init__(self, master):
         global coords, image
+        global points
+
+
         self.master = master
-        self.master.geometry("800x250")  ## gui 크기  가로 x 세로
+        self.master.geometry("400x400")  ## gui 크기  가로 x 세로
+        self.master.resizable(False,False) ## 리사이즈 불가
         master.title("ScreenShotter 0.0.1")
         
         self.label = tk.Label(master)
-        
-        self.areaBtn = tk.Button(master, text="Select Area", command=lambda: GUI.grab_area(self.label))
-        
+
+        self.areaBtn = tk.Button(master, text="Select Area", command=lambda: GUI.grab_area(self, self.label))
+        self.startBtn = tk.Button(master, text="START", command=lambda: GUI.grab_area(self,self.label))
+        self.endBtn = tk.Button(master, text="END", command=lambda: GUI.grab_area(self,self.label))
+
+
+        self.pointLabel = tk.Label(master,text="입력 없음")
+
         coords = tk.StringVar()
 
-        self.areaBtn.pack(side=tk.LEFT)
-        self.label.pack(side=tk.LEFT)
+
+        self.startBtn.pack(side=tk.TOP,anchor=tk.W,fill=tk.X)
+        self.endBtn.pack(side=tk.TOP,anchor=tk.W,fill=tk.X )
+        self.areaBtn.pack(side=tk.LEFT,anchor=tk.N)
+        self.pointLabel.pack(side=tk.TOP)
+
+        self.label.pack(side=tk.BOTTOM)
         #print("2")
+
+
         
-        
-    def stuff():
+    def stuff(self):
         #print("#################")
         box = coords.get()
         #print(box)
         box = box.replace(",","(")
         box = box.replace(")","")
         box = box.split("(")
+
         del box[0]
         for i in range(len(box)):
             box[i] = int(box[i])
         #print(box)
         try:
             im=ImageGrab.grab(bbox=(box[0],box[1],box[2],box[3]))
+            print("x1 :",box[0], "     y1 :" ,box[1],"     x2 :" ,box[2],"     y2 : " ,box[3])
+            self.pointLabel.config(text=str(box))
             im.save("image.png", "PNG")
+
+            im.resize((200, 150)).save("thumbnail.gif")
+
+            return box
+
         except Exception as e:
             print(e)
             
         
-    def grab_area(selflabel):
+    def grab_area(self,selflabel):
         pressed = False
         started = False
         
@@ -79,12 +104,16 @@ class GUI:
                         last = mouse # end of square
                         coords.set(str(first)+str(last))
                         window.destroy()
-                        GUI.stuff()
+                        GUI.stuff(self)
 
-                        selflabel.image = tk.PhotoImage(file="image.png")
+
+                        ##selflabel.image = tk.PhotoImage(file="image.png")
+                        ##selflabel['image'] = selflabel.image
+
+                        selflabel.image = tk.PhotoImage(file="thumbnail.gif")
                         selflabel['image'] = selflabel.image
 
-                        selflabel.pack()
+                        selflabel.pack(side=tk.LEFT)
                         
                         
                         
