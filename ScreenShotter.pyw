@@ -81,7 +81,7 @@ class GUI:
                         window.destroy()
                         GUI.stuff()
 
-                        selflabel.image = tk.PhotoImage(file="image.png")
+                        selflabel.image = tk.PhotoImage(file="image2.png")
                         selflabel['image'] = selflabel.image
 
                         selflabel.pack()
