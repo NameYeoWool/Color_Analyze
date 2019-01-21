@@ -21,9 +21,12 @@ def main():
     noise_column = 0
     noise_row = 0
 
-    cropPoint_mainRow =[]
-    cropPoint_ColumnList =[]  # 새로로 자르기 전의 [row_start,column_start] 값들   row는 고정되어 있음  / mainRow의 개수와 동일해야함
-    cropPoint_seatList= []  # 개별 좌석의 [indexRow,indexColumn]  / ColumnList의 list안의 list  갯수와 같아야 함
+    cropPoint_mainStart =[]
+    cropPoint_secondList =[]  # 새로로 자르기 전의 [row_start,column_start] 값들   row는 고정되어 있음  / mainRow의 개수와 동일해야함
+    cropPoint_ThirdList= []  # 개별 좌석의 [indexRow,indexColumn]  / ColumnList의 list안의 list  갯수와 같아야 함
+
+    cropPoint_mainEnd = []
+
 
     image = cv2.imread("image_story.png",0) # 뒤의 0은 gray 색으로 바꾼것을 의미
     row_origin, column_origin = image.shape[:2]
@@ -49,6 +52,7 @@ def main():
 
     #arr_ver =np.divide(arr_ver,1000)  ## vertical value is too large divide 1000 , this valeus is not a opimal value
 
+
     # TODO: this is the point to save txt file of arry sum
     #np.savetxt('arr_row_story.txt', arr_row, fmt='%f')
     #np.savetxt('arr_ver_story.txt', arr_ver, fmt='%f')
@@ -70,6 +74,7 @@ def main():
 
     # find Verical error based arr_row ( to crop row )
 
+
     # noise, seat size
     noise_column, seat_height =  findStandard(thresh, arr_row ,VERTICAL)  # noise, seat_height
     noise_row, seat_width =  findStandard(thresh, arr_ver, ROW )
@@ -80,11 +85,12 @@ def main():
     print("row_start : " ,row_start,"\nrow_end :",row_end)
     column_start, column_end= pointStartEnd(arr_ver,noise_column)
     print("column_start : " ,column_start,"\ncolumn_end :",column_end)
+
     h = row_end-row_start
     w = column_end-column_start
     crop_img = thresh[row_start:row_start+h, column_start: column_start+w]
     height,width = crop_img.shape[:2]
-    print(height,width)
+    #print(height,width)
     cv2.imshow("Start_cropped",crop_img)
     cv2.waitKey(0)
 
@@ -97,25 +103,70 @@ def main():
 
     # [ ( index_justBeforeZero , index_startNoneZero , length ) , ..... , ()  ]
     row_noneZeroToNoneZero_fullImage, row_standardForCrop = findRange(arr_row,row_start,row_end, noise_row, ROW) #findRange( arr, startPoint, endPoint, noise, orientation)
-    col_noneZeroToNoneZero_fullImage, column_standardForCrop = findRange(arr_ver,row_start,row_end, noise_column, VERTICAL)
+    col_noneZeroToNoneZero_fullImage, column_standardForCrop = findRange(arr_ver,column_start,column_end, noise_column, VERTICAL)
 
 
-    # first,  crop_point Main by row
-    cropPoint_mainRow.append((row_start,column_start))   # first Point
-    for i in range(len(row_noneZeroToNoneZero_fullImage)):
+    # first,  crop_point Main
+    cropPoint_mainStart.append((row_start,column_start))   # first Point
+    length_list = len(row_noneZeroToNoneZero_fullImage)
+    for i in range(length_list):
         if row_noneZeroToNoneZero_fullImage[i][2] >row_standardForCrop :     # [ ( index_justBeforeZero , index_startNoneZero , length ) , ..... , ()  ]
-            cropPoint_mainRow.append((row_noneZeroToNoneZero_fullImage[i][0],column_start)) # (index_justBeforeZero , column_start)   / shape of tuple
-    print(cropPoint_mainRow)
+            cropPoint_mainEnd.append((row_noneZeroToNoneZero_fullImage[i][0], column_end))  # (index_justBeforeZero, column_end)    it means x2,y2
+            cropPoint_mainStart.append((row_noneZeroToNoneZero_fullImage[i][1],column_start)) # (index_startNoneZero , column_start)   / shape of tuple  / it means x1,y1
+
+    cropPoint_mainEnd.append((row_end,column_end))   # last Point
+
+    print("cropPoint_mainStart : ",cropPoint_mainStart)
+    print("cropPoint_mainEnd : ",cropPoint_mainEnd)
 
     # second, crop Column Point
-    secondCrop(thresh,cropPoint_mainRow)   #secondCrop(image, cropPoint_List)  / cropPoint_list not null
-    # subList = []
+
+    w = cropPoint_mainEnd[0][1] - cropPoint_mainStart[0][1]   # w is fixed
+    for i in range(len(cropPoint_mainStart)):
+        subList = []  # new Instance of List
+        h = cropPoint_mainEnd[i][0] - cropPoint_mainStart[i][0]
+        print("firstCrop_height : ",h)
+        first_crop_img = thresh[cropPoint_mainStart[i][0]: cropPoint_mainStart[i][0]+h , cropPoint_mainStart[i][1]:cropPoint_mainStart[i][1]+w]
+        height_first_crop_img,width_first_crop_img = first_crop_img.shape[:2]
+        cv2.imshow("first Crop Image", first_crop_img)
+        cv2.waitKey()
+        cv2.destroyWindow("first Crop Image")
+
+
+        # get point
+
+        arr_second_column = np.sum(thresh, axis=VERTICAL).tolist()
+        column_second_start, column_second_end = pointStartEnd(arr_second_column, noise_column)
+        col_noneZeroToNoneZero_SecondImage, column_standardForCrop = findRange(arr_second_column, column_second_start, column_second_end, noise_column,
+                                                                             VERTICAL)
+
+        subList.append((0,0))  # first Point of second image
+        element_start = column_second_start
+        for element in col_noneZeroToNoneZero_SecondImage:
+            print("elemnet : " ,element)
+            subList.append((0,element[1]))
+            w_second = element[0]- element_start
+            print("second width : " , w_second)
+            second_crop_img = first_crop_img[0:height_first_crop_img, element_start:element_start+w_second]
+            height_second_crop_img, width_second_crop_img = second_crop_img.shape[:2]
+            cv2.imshow("Second Crop Image", second_crop_img)
+            cv2.waitKey()
+            cv2.destroyWindow("Second Crop Image")
+            element_start = element[1]
+
+
+        cropPoint_secondList.append(subList)
+
+    return
+
+
     # cropPoint_ColumnList.append(subList)
 
 
-def secondCrop(thresh, cropPoint_row):
+def secondCrop(thresh, cropPoint_row, noise_column, noise_row):
     secondPoint = []
 
+    # pointStartEnd(arr,noise)
 
 def thirdCrop(thresh, secondCropPoint):
     return
