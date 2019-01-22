@@ -39,7 +39,7 @@ def main():
 
 
 
-    image = cv2.imread("image_seven.png",0) # 뒤의 0은 gray 색으로 바꾼것을 의미
+    image = cv2.imread("image.png",0) # 뒤의 0은 gray 색으로 바꾼것을 의미
     row_origin, column_origin = image.shape[:2]
 
     # cv2.imshow("pcroom",image)
@@ -139,20 +139,10 @@ def main():
         height_first_crop_img,width_first_crop_img = first_crop_img.shape[:2]
         name_crop = first_seperator + str(i)
 
-        # arr_ver = np.sum(first_crop_img, axis=0).tolist()  ## x축 기준 histogram
-        # np.savetxt(name_crop+".txt", arr_ver, fmt='%f')
-
-        # print(arr_ver)
-        # plt.plot(arr_ver)
-        # plt.savefig("crop_plot.png")
-        # plt.show()
-
 
         cv2.imshow(name_crop, first_crop_img)
         cv2.imwrite(name_crop+".png",first_crop_img)
         cv2.waitKey()
-        #cv2.destroyWindow(name_crop)
-
 
         #################################################################
         #
@@ -168,21 +158,12 @@ def main():
         arr_second_column = np.sum(first_crop_img, axis=VERTICAL).tolist()
 
         row_second_start, row_second_end = pointStartEnd(arr_second_row, noise_row)
-        # print("row_second_start " , row_second_start)
-        # print("row_second_end ", row_second_end)
-
         column_second_start, column_second_end = pointStartEnd(arr_second_column, noise_column)
-        # print("col_second_start ", column_second_start)
-        # print("col_second_end ", column_second_end)
 
         row_noneZeroToNoneZero_SecondImage, row_standardSecondForCrop = findRange(arr_second_row, row_second_start, row_second_end, noise_row,
                                                                                   ROW)
         col_noneZeroToNoneZero_SecondImage, column_standardSecondForCrop = findRange(arr_second_column, column_second_start, column_second_end, noise_column,
                                                                             VERTICAL)
-
-        # print("row_noneZeroToNoneZero_SecondImage : ",row_noneZeroToNoneZero_SecondImage)
-        # print("col_noneZeroToNoneZero_SecondImage : ",col_noneZeroToNoneZero_SecondImage)
-
         cropPoint_secondStart.append((row_second_start, column_second_start))  # first Point
         for index_nonZero_second in range(len(col_noneZeroToNoneZero_SecondImage)):
             if col_noneZeroToNoneZero_SecondImage[index_nonZero_second][2] > column_standardSecondForCrop:  # [ ( index_justBeforeZero , index_startNoneZero , length ) , ..... , ()  ]
@@ -205,12 +186,10 @@ def main():
             w_second = cropPoint_secondEnd[index_secondStart][1] - cropPoint_secondStart[index_secondStart][1]
             print("firstCrop_height : ", h)
             second_crop_img = first_crop_img[0: 0+h, cropPoint_secondStart[index_secondStart][1]:cropPoint_secondStart[index_secondStart][1]+w_second ]
-            height_second_crop_img, width_second_crop_img = second_crop_img.shape[:2]
             name_secondCrop = second_seperator + str(index_secondStart)+".png"
             cv2.imshow(name_secondCrop, second_crop_img)
             cv2.imwrite(name_secondCrop,second_crop_img)
             cv2.waitKey()
-            #cv2.destroyWindow(name_secondCrop)
 
             #################################################################
             #
@@ -225,23 +204,9 @@ def main():
             arr_third_row = np.sum(second_crop_img, axis=ROW).tolist()
             arr_third_column = np.sum(second_crop_img, axis=VERTICAL).tolist()
 
-            # np.savetxt("arr_third_row.txt", arr_third_row, fmt='%f')
-            # np.savetxt("arr_third_column.txt", arr_third_column, fmt='%f')
-
-
-            #
-            # print(arr_ver)
-            # plt.plot(arr_ver)
-            # plt.savefig("crop_plot.png")
-            # plt.show()
-
             row_third_start, row_third_end = pointStartEnd(arr_third_row, noise_row)
-            print("row_third_start ", row_third_start)
-            print("row_third_end ", row_third_end)
 
             column_third_start, column_third_end = pointStartEnd(arr_third_column, noise_column)
-            print("column_third_start ", column_third_start)
-            print("column_third_end ", column_third_end)
 
             # originally, set the noise_row value
             # but when thir Crop, cut the point that has really small value
@@ -255,12 +220,11 @@ def main():
                                                                                          noise_column,
                                                                                          VERTICAL)
 
-            # print("row_noneZeroToNoneZero_ThirdImage : ",row_noneZeroToNoneZero_ThirdImage)
-            # print("col_noneZeroToNoneZero_ThirdImage : ",col_noneZeroToNoneZero_ThirdImage)
 
             cropPoint_ThirdStart.append((row_third_start, column_third_start))  # first Point
             for index_nonZero_third in range(len(row_noneZeroToNoneZero_ThirdImage)):
-                    # 여기부터는 차이가 있는 공간은 모두 자름
+                    # from now on, don't consider (LEFT - RIGHT)  is greater than standard
+                    # just cut
                     cropPoint_ThirdEnd.append((row_noneZeroToNoneZero_ThirdImage[index_nonZero_third][LEFT],
                                               column_third_end))  # (index_justBeforeZero, column_end)    it means x2,y2
                     cropPoint_ThirdStart.append((row_noneZeroToNoneZero_ThirdImage[index_nonZero_third][RIGHT],
@@ -278,19 +242,12 @@ def main():
             w_third = cropPoint_ThirdEnd[0][1] - cropPoint_ThirdStart[0][1]  # w is fixed
             third_seperator = "Third Crop Image "
             for idex_thirStart in range(len(cropPoint_ThirdStart)):
+                # from now on, don't consider (LEFT - RIGHT)  is greater than standard
+                # just cut
                 h_third = cropPoint_ThirdEnd[idex_thirStart][0] - cropPoint_ThirdStart[idex_thirStart][0]
                 third_crop_img = second_crop_img[cropPoint_ThirdStart[idex_thirStart][0]: cropPoint_ThirdStart[idex_thirStart][0] + h_third,
                                  cropPoint_ThirdStart[idex_thirStart][1]:cropPoint_ThirdStart[idex_thirStart][1] + w_third]
-                height_first_crop_img, width_first_crop_img = third_crop_img.shape[:2]
                 name_third_crop = third_seperator + str(idex_thirStart)
-
-                # arr_ver = np.sum(first_crop_img, axis=0).tolist()  ## x축 기준 histogram
-                # np.savetxt(name_crop+".txt", arr_ver, fmt='%f')
-                #
-                # print(arr_ver)
-                # plt.plot(arr_ver)
-                # plt.savefig("crop_plot.png")
-                # plt.show()
 
                 cv2.imshow(name_third_crop, third_crop_img)
                 cv2.imwrite(name_third_crop + ".png", third_crop_img)
@@ -304,19 +261,14 @@ def main():
                 #################################################################
 
                 print("Fourth Crop in ")
-                print("")
                 cropPoint_fourthStart= []
                 cropPoint_fourthEnd= []
                 arr_fourth_row= np.sum(third_crop_img, axis=ROW).tolist()
                 arr_fourth_column= np.sum(third_crop_img, axis=VERTICAL).tolist()
 
                 row_fourth_start, row_fourth_end= pointStartEnd(arr_fourth_row, noise_row)
-                print("row_third_start ", row_third_start)
-                print("row_third_end ", row_third_end)
 
                 column_fourth_start, column_fourth_end = pointStartEnd(arr_fourth_column, noise_column)
-                print("column_third_start ", column_third_start)
-                print("column_third_end ", column_third_end)
 
                 # when fourth cor,set the noise_row value
                 # column value has noise because some word mask the blank
@@ -325,9 +277,6 @@ def main():
                                                                                              column_fourth_end,
                                                                                              noise_column,
                                                                                              VERTICAL)
-
-                # print("row_noneZeroToNoneZero_SecondImage : ",row_noneZeroToNoneZero_SecondImage)
-                # print("col_noneZeroToNoneZero_SecondImage : ",col_noneZeroToNoneZero_SecondImage)
 
                 cropPoint_fourthStart.append((row_fourth_start, column_fourth_start))  # first Point
                 for index_nonZero_fourth in range(len(col_noneZeroToNoneZero_FourthImage)):
