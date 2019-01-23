@@ -23,10 +23,10 @@ def main():
     cropPoint_mainThirdStart = []
     cropPoint_mainFourthStart = []
 
-    cropPoint_seatStart =[]
-
-
+    origin_image = cv2.imread("image_seven.png")
     image = cv2.imread("image_seven.png",0) # 뒤의 0은 gray 색으로 바꾼것을 의미
+
+    fullImage_height, fullImage_width = image.shape[:2]
 
     ret, thresh0 = cv2.threshold(image, 127, 255, cv2.THRESH_TRUNC) #  by THRESH_TRUNC OPTION
     ret,thresh = cv2.threshold(thresh0.copy(),0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU) # one more threshold by THRESH_BINARY+cv2.THRESH_OTSU OPTION
@@ -38,8 +38,9 @@ def main():
 
     # noise, seat size
     noise_column, seat_height =  findStandard(thresh, arr_row ,VERTICAL)  # noise, seat_height
+    print(seat_height)
     noise_row, seat_width =  findStandard(thresh, arr_ver, ROW )
-
+    print(seat_width)
 
     # value without noise
     row_start, row_end = pointStartEnd(arr_row,noise_row)
@@ -260,55 +261,96 @@ def main():
     # End of first
 
 
-    print("cropPoint_mainStart : " , cropPoint_mainStart)
-    print("Length : ", len(cropPoint_mainStart))
+    # print("cropPoint_mainStart : " , cropPoint_mainStart)
+    # print("Length : ", len(cropPoint_mainStart))
+    #
+    # print("cropPoint_mainSecondStart : " , cropPoint_mainSecondStart)
+    # print("Length : ", len(cropPoint_mainSecondStart))
+    # print("Element Length : ", len(cropPoint_mainSecondStart[0]))
+    #
+    # print("cropPoint_mainThirdStart : ", cropPoint_mainThirdStart)
+    # print("Length : ", len(cropPoint_mainThirdStart))
+    # print("Element Length : ", len(cropPoint_mainThirdStart[0]))
+    #
+    # print("cropPoint_mainFourthStart : " ,cropPoint_mainFourthStart)
+    # print("Length : ", len(cropPoint_mainFourthStart))
+    # print("Element Length : ", len(cropPoint_mainFourthStart[0]))
 
-    print("cropPoint_mainSecondStart : " , cropPoint_mainSecondStart)
-    print("Length : ", len(cropPoint_mainSecondStart))
-    print("Element Length : ", len(cropPoint_mainSecondStart[0]))
+    seatPosition = findSeatPosition(cropPoint_mainStart,cropPoint_mainSecondStart, cropPoint_mainThirdStart, cropPoint_mainFourthStart)
+    print(seatPosition)
+    detectSeatStatus(origin_image,seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
 
-    print("cropPoint_mainThirdStart : ", cropPoint_mainThirdStart)
-    print("Length : ", len(cropPoint_mainThirdStart))
-    print("Element Length : ", len(cropPoint_mainThirdStart[0]))
 
-    print("cropPoint_mainFourthStart : " ,cropPoint_mainFourthStart)
-    print("Length : ", len(cropPoint_mainFourthStart))
-    print("Element Length : ", len(cropPoint_mainFourthStart[0]))
+    return seatPosition, fullImage_height,fullImage_width,seat_height, seat_width
 
-    findSeatPosition(cropPoint_mainStart,cropPoint_mainSecondStart, cropPoint_mainThirdStart, cropPoint_mainFourthStart)
+def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
+    return
+
+def detectSeatStatus(origin_image,seatPosition, fullImage_height, fullImage_width,seat_height, seat_width):
+
+    r =0
+    c =1
+
+    origin_image = cv2.imread("image_seven.png")
+
+    # seat Position element
+    #  two dimension  [ [ ] , [] , [] , ..... [] ]
+    #  one dimension  [ (row, col) ]
+    #  now append status
+    for i in range(len(seatPosition)):
+        # define ROI of RGB image 'img'
+        # '0' mean first element of one dimension
+        # that is tuple
+        roi = origin_image[seatPosition[i][0][r]:seatPosition[i][0][r]+seat_height, seatPosition[i][0][c]:seatPosition[i][0][c]+seat_width]
+        cv2.imshow(" roi " , roi)
+        cv2.waitKey()
+        cv2.destroyWindow(" roi ")
+
+        # convert it into HSV
+        hsv = origin_image.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        print(hsv)
+        return
+
+
+
+
+    return
+
 
 
 def findSeatPosition(mainFirst, mainSecond, mainThird, mainFourth):
     seatPosition = []
-    ROW= 0
-    COL = 1
+    r= 0
+    C = 1
 
     for i in range(len(mainFirst)):
         # one dimension , last tuple
-        seatRow = mainFirst[i][ROW]
-        seatCol = mainFirst[i][COL]
+        seatRow = mainFirst[i][r]
+        seatCol = mainFirst[i][C]
 
         for j in range(len(mainSecond[i])):
             #two dimension , last tuple
-            seatRow += mainSecond[i][j][ROW]
-            seatCol += mainSecond[i][j][COL]
-            print(seatRow)
-            print(seatCol)
+            seatRow += mainSecond[i][j][r]
+            seatCol += mainSecond[i][j][C]
 
-            for x in range(len(mainThird[i][j])):
+            for k in range(len(mainThird[i][j])):
                 # three dimension, last tuple
-                seatRow += mainThird[i][j][x][ROW]
-                seatCol += mainThird[i][j][x][COL]
+                seatRow += mainThird[i][j][k][r]
+                seatCol += mainThird[i][j][k][C]
 
-                # for z in range(len(mainFourth[])):
+                for m in range(len(mainFourth[i][j][k])):
+                    seatRow += mainFourth[i][j][k][m][r]
+                    seatCol += mainFourth[i][j][k][m][C]
 
-
-            return
+                    seatPosition.append([(seatRow,seatCol)])
 
 
     return seatPosition
 
+
+
 def findStandard(thresh_img, arr_row,orientation):
+    seat_value= 0
     max = 0
     img = thresh_img
     row_img, column_img = thresh_img.shape[:2]
@@ -336,6 +378,8 @@ def findStandard(thresh_img, arr_row,orientation):
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
 
+        seat_value = h
+
     else:
 
         w = index_BeforeZero - index_firstNonzero
@@ -345,6 +389,8 @@ def findStandard(thresh_img, arr_row,orientation):
         # cv2.imwrite("partition_row.png", crop_img)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
+
+        seat_value = w
 
     arr_sum= np.sum(crop_img, axis=orientation).tolist()  ## arr_histogram depending on orientation
     max= np.max(arr_sum)
@@ -356,7 +402,7 @@ def findStandard(thresh_img, arr_row,orientation):
     np.savetxt(name, arr_sum, fmt='%f')
     #print(max)
 
-    return max*0.6, max  # noiseValue, seatSizeValue
+    return max*0.6, seat_value  # noiseValue, seatSizeValue
 
     # 9600  7600  seven pc / 9600 * 0.6  include  7600
 
