@@ -2,19 +2,26 @@ import cv2
 import matplotlib.pyplot as plt #importing matplotlib
 import numpy as np
 import simplejson as simplejson
-from PIL.Image import Image
+from PIL import Image, ImageDraw, ImageFont
 
 import ImageToHistogram
 def main():
 
     global VERTICAL, ROW
     global LEFT, RIGHT
+    global AVAILABLE, UNAVAILABLE
+
     LEFT = 0
     RIGHT =1
 
+    # row ROW    is different
+    # ROW is used to np.sum  that axis is  0:vertical 1:row
+    # row is used for tuple,  (row, column)
     VERTICAL = 0
     ROW = 1
 
+    AVAILABLE = 0
+    UNAVAILABLE = 1
 
     cropPoint_mainStart =[]
     cropPoint_mainEnd = []
@@ -23,8 +30,7 @@ def main():
     cropPoint_mainThirdStart = []
     cropPoint_mainFourthStart = []
 
-    origin_image = cv2.imread("image_seven.png")
-    image = cv2.imread("image_seven.png",0) # 뒤의 0은 gray 색으로 바꾼것을 의미
+    image = cv2.imread("image.png",0) # 뒤의 0은 gray 색으로 바꾼것을 의미
 
     fullImage_height, fullImage_width = image.shape[:2]
 
@@ -38,9 +44,9 @@ def main():
 
     # noise, seat size
     noise_column, seat_height =  findStandard(thresh, arr_row ,VERTICAL)  # noise, seat_height
-    print(seat_height)
+    #print(seat_height)
     noise_row, seat_width =  findStandard(thresh, arr_ver, ROW )
-    print(seat_width)
+    # print(seat_width)
 
     # value without noise
     row_start, row_end = pointStartEnd(arr_row,noise_row)
@@ -64,8 +70,8 @@ def main():
 
     cropPoint_mainEnd.append((row_end,column_end))   # last Point
 
-    print("cropPoint_mainStart : ",cropPoint_mainStart)
-    print("cropPoint_mainEnd : ",cropPoint_mainEnd)
+    #print("cropPoint_mainStart : ",cropPoint_mainStart)
+    #print("cropPoint_mainEnd : ",cropPoint_mainEnd)
 
     # frist, Crop
 
@@ -88,7 +94,7 @@ def main():
         #
         #################################################################
 
-        print("Second Crop in ")
+        #print("Second Crop in ")
         cropPoint_secondStart = []   # initialize
         cropPoint_secondEnd = []
 
@@ -113,8 +119,8 @@ def main():
 
         cropPoint_secondEnd.append((row_second_start, column_second_end))  # last Point
 
-        print("cropPoint_secondStart : " , cropPoint_secondStart)
-        print("cropPoint_secondEnd : " , cropPoint_secondEnd)
+        #print("cropPoint_secondStart : " , cropPoint_secondStart)
+        #print("cropPoint_secondEnd : " , cropPoint_secondEnd)
 
         tmp_cropPoint_mainFourth_Start_two=[]
 
@@ -139,7 +145,7 @@ def main():
             #
             #################################################################
 
-            print("Third Crop in ")
+            #print("Third Crop in ")
             cropPoint_ThirdStart = [] # initialize
             cropPoint_ThirdEnd = []
 
@@ -201,7 +207,7 @@ def main():
                 #
                 #################################################################
 
-                print("Fourth Crop in ")
+                #print("Fourth Crop in ")
                 cropPoint_fourthStart= [] # initialize
                 cropPoint_fourthEnd= []
                 arr_fourth_row= np.sum(third_crop_img, axis=ROW).tolist()
@@ -277,44 +283,77 @@ def main():
     # print("Element Length : ", len(cropPoint_mainFourthStart[0]))
 
     seatPosition = findSeatPosition(cropPoint_mainStart,cropPoint_mainSecondStart, cropPoint_mainThirdStart, cropPoint_mainFourthStart)
-    print(seatPosition)
-    detectSeatStatus(origin_image,seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
+    # print(seatPosition)
 
+    # todo: delet this two line after test
+    detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
+    drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width)
 
     return seatPosition, fullImage_height,fullImage_width,seat_height, seat_width
 
 def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
+
+
+    image = Image.new("RGB", (fullImage_width, fullImage_height), (0,0,0))
+    draw = ImageDraw.Draw(image)
+
+    # here seatPosition list has the status
+    # seatPosition element
+    #  two dimension  [ [ ] , [] , [] , ..... [] ]
+    #  one dimension  [ (row, col), status ]
+    status = 1;
+
+    for i in range(len(seatPosition)):
+        row = int(seatPosition[i][0][0])  # tuple -> int to operand with int
+        col = int(seatPosition[i][0][1])
+        if seatPosition[i][status] == AVAILABLE:
+            draw.rectangle([(col, row), (col + seat_width, row+ seat_height)], (64, 132, 34) )  # (64, 132, 34) : green
+        else: # unavailable
+            draw.rectangle([(col, row), (col+ seat_width, row + seat_height)], (67, 65, 66) )  # (67, 65, 66) : gray
+
+    filename = "convert.gif"
+    image.save(filename)
+    image.resize((200, 150)).save("convert_thumbnail.gif")
+
     return
 
-def detectSeatStatus(origin_image,seatPosition, fullImage_height, fullImage_width,seat_height, seat_width):
+def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_height, seat_width):
 
     r =0
     c =1
 
-    origin_image = cv2.imread("image_seven.png")
+    v_Standard = 100
+    cnt_seat = 0
+    cnt_unavail = 0
+    cnt_avail = 0
 
+    origin_image = cv2.imread("image.png")
     # seat Position element
     #  two dimension  [ [ ] , [] , [] , ..... [] ]
     #  one dimension  [ (row, col) ]
-    #  now append status
+    #  we want to append status in one dimension [ (row, col) , status ]
+    #  status mean this is available or not
     for i in range(len(seatPosition)):
+        cnt_seat += 1
         # define ROI of RGB image 'img'
         # '0' mean first element of one dimension
         # that is tuple
         roi = origin_image[seatPosition[i][0][r]:seatPosition[i][0][r]+seat_height, seatPosition[i][0][c]:seatPosition[i][0][c]+seat_width]
-        cv2.imshow(" roi " , roi)
-        cv2.waitKey()
-        cv2.destroyWindow(" roi ")
 
         # convert it into HSV
-        hsv = origin_image.cvtColor(roi, cv2.COLOR_BGR2HSV)
-        print(hsv)
-        return
+        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv)
 
+        v_mean = np.mean(v)
 
+        if v_mean > v_Standard : # seat unavailable
+            seatPosition[i].append(AVAILABLE)      # [ (row, col), status ]
+            cnt_unavail += 1
+        else:
+            seatPosition[i].append(UNAVAILABLE)
+            cnt_avail += 1
 
-
-    return
+    return cnt_seat, cnt_avail,cnt_unavail
 
 
 
@@ -339,10 +378,25 @@ def findSeatPosition(mainFirst, mainSecond, mainThird, mainFourth):
                 seatCol += mainThird[i][j][k][C]
 
                 for m in range(len(mainFourth[i][j][k])):
+
                     seatRow += mainFourth[i][j][k][m][r]
                     seatCol += mainFourth[i][j][k][m][C]
 
                     seatPosition.append([(seatRow,seatCol)])
+
+                    seatRow -= mainFourth[i][j][k][m][r]
+                    seatCol -= mainFourth[i][j][k][m][C]
+
+                seatRow -= mainThird[i][j][k][r]
+                seatCol -= mainThird[i][j][k][C]
+
+
+            seatRow -= mainSecond[i][j][r]
+            seatCol -= mainSecond[i][j][C]
+
+        seatRow -= mainFirst[i][r]
+        seatCol -= mainFirst[i][C]
+
 
 
     return seatPosition
@@ -447,6 +501,12 @@ def pointStartEnd(arr,noise):
             break;
     return start,end
 
-main()
-
-
+# main_return = main()
+#
+# #detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
+# cnt_seat,cnt_avail,cnt_unavail =detectAppendSeatStatus(main_return[0],main_return[1],main_return[2],main_return[3],main_return[4])
+# print(cnt_seat)
+# print(cnt_avail)
+# print(cnt_unavail)
+#
+# drawSeat(main_return[0],main_return[1],main_return[2],main_return[3],main_return[4])
