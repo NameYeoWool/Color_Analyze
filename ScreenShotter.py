@@ -3,6 +3,7 @@ import time
 
 from threading import Thread
 from PIL import ImageGrab
+import threading
 import tkinter as tk
 import pyautogui
 import win32api
@@ -14,6 +15,9 @@ class GUI:
         global coords, image
         global points
 
+        self.setSeat = False
+
+        self.seatCnt = 0
 
         self.set_flag = False
 
@@ -26,11 +30,11 @@ class GUI:
 
         fm = tk.Frame(master)
         self.areaBtn = tk.Button(master,text="영역 지정", command=lambda: GUI.grab_area(self, self.label))
-        self.startBtn = tk.Button(master, text="시작", command= self.seat)
-        self.endBtn = tk.Button(master, text="중지", command=self.end)
+        self.startBtn = tk.Button(master, text="시작", command= self.switchon)
+        self.endBtn = tk.Button(master, text="중지", command=self.switchoff)
 
-        self.setBtn = tk.Button(master ,width= 20,text="좌석 개수 확정", command=lambda: GUI.grab_area(self,self.label))
-        self.resetBtn = tk.Button(master,width= 20, text="좌석 개수 재설정", command=lambda: GUI.grab_area(self,self.label))
+        self.setBtn = tk.Button(master ,width= 20,text="좌석 개수 확정", command=self.setSeatCnt)
+        self.resetBtn = tk.Button(master,width= 20, text="좌석 개수 재설정", command=self.unsetSeatCnt)
 
         self.areaLabel = tk.Label(master,text="입력 없음")
 
@@ -49,40 +53,70 @@ class GUI:
         #self.label.pack(side=tk.BOTTOM)
         #print("2")
 
-    def seat(self,):
-        Analyze.main()
-        # image = cv2.imread("convert.gif")
-        # cv2.imshow("convet_",image)
-        # cv2.waitKey()
-        # cv2.destroyWindow("convert_")
-        # main = Thread(target=Analyze.main )
-        # main.sleep(3)
-        # main.start()
+    def resolve(self):
+        global setSeat
+        def run():
+            if(self.setSeat == False):
+                #GUI.stuff(self)  # 이미지 저장
 
-        # i=0
-        # selflabel= self.label
-        # print(self.set_flag)
-        # while(self.set_flag):
-        #     Analyze.main()
-        #     i += 1
-        #     print("main ",i)
-        #
-        #     selflabel.image = tk.PhotoImage(file="convert_thumbnail.gif")
-        #     selflabel['image'] = selflabel.image
-        #
-        #     selflabel.pack(side=tk.LEFT)
-        #
-        #     time.sleep(3)
-    def end(self):
-        # main.exit()
+                print('test...test...')
+                main_return = Analyze.main()
+                # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
+                cnt_seat, cnt_avail, cnt_unavail = Analyze.detectAppendSeatStatus(main_return[0], main_return[1],
+                                                                                  main_return[2], main_return[3],
+                                                                                  main_return[4])
+                # self.areaLabel.config(text=str(box))
+                self.cntLabel.config(text="전체 좌석 : "+str(cnt_seat))
+                self.seatCnt = cnt_seat
+                Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
 
-        self.set_flag=not self.set_flag
-        print(self.set_flag)
+
+            else:
+                while (switch == True):
+                    GUI.stuff(self)
+                    print('resolve...resolve...')
+                    main_return = Analyze.main()
+                    # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
+                    cnt_seat, cnt_avail, cnt_unavail = Analyze.detectAppendSeatStatus(main_return[0], main_return[1],
+                                                                              main_return[2], main_return[3],
+                                                                              main_return[4])
+                    # popup, another page, etc ....
+                    if( cnt_seat != self.seatCnt):
+                        time.sleep(5)
+                        continue
+                    else:
+                        Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
+                        time.sleep(5)
+
+                    if switch == False:
+                        break
+
+        thread = threading.Thread(target=run)
+        thread.start()
+
+    def switchon(self):
+        global switch
+        switch = True
+        print ('switch on')
+        self.resolve()
+
+    def switchoff(self):
+        print('switch off')
+        global switch
+        switch = False
+
+    def setSeatCnt(self):
+        print('set SeatCnt')
+        self.setSeat = True
+    def unsetSeatCnt(self):
+        print('unset SeatCnt')
+        self.setseat = False
+
 
     def stuff(self):
         #print("#################")
         box = coords.get()
-        #print(box)
+        print(box)
         box = box.replace(",","(")
         box = box.replace(")","")
         box = box.split("(")

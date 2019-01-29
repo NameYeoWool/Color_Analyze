@@ -1,10 +1,8 @@
 import cv2
 import matplotlib.pyplot as plt #importing matplotlib
 import numpy as np
-import simplejson as simplejson
 from PIL import Image, ImageDraw, ImageFont
 
-import ImageToHistogram
 def main():
 
     global VERTICAL, ROW
@@ -34,19 +32,36 @@ def main():
 
     fullImage_height, fullImage_width = image.shape[:2]
 
-    ret, thresh0 = cv2.threshold(image, 127, 255, cv2.THRESH_TRUNC) #  by THRESH_TRUNC OPTION
+    # the point threshhold ( now 70 ) can be modified depending on situationo( depending on screenshot )
+    # 70 is appropriate  seven, story  screen shot
+    ret, thresh0 = cv2.threshold(image, 70, 255, cv2.THRESH_TRUNC) #  by THRESH_TRUNC OPTION
     ret,thresh = cv2.threshold(thresh0.copy(),0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU) # one more threshold by THRESH_BINARY+cv2.THRESH_OTSU OPTION
 
+    cv2.imshow("image",thresh)
+    cv2.imwrite("thresh.png",thresh)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
 
     # get index and value ( find index '0' value )
     arr_ver = np.sum(thresh, axis=0).tolist()  ## x축 기준 histogram
     arr_row = np.sum(thresh,axis=1).tolist()  ## y축 기준 histogram
 
+    np.savetxt("arr_row", arr_row, fmt='%f')
+    plt.plot(arr_row)
+    plt.savefig("arr_row"+"_plot.png")
+    plt.show()
+
+
+    # some cases, fir row line is not cutted by '0' points
+    # because the layout is not simple
+    # so, we assume that first column line is simple
     # noise, seat size
-    noise_column, seat_height =  findStandard(thresh, arr_row ,VERTICAL)  # noise, seat_height
-    #print(seat_height)
-    noise_row, seat_width =  findStandard(thresh, arr_ver, ROW )
+    crop_img,noise_row, seat_width =  findStandard(thresh, arr_ver, ROW )
+    # print("noise row  : " , noise_row)
     # print(seat_width)
+    crop_img_arr_row = np.sum(crop_img, axis=1).tolist()  ## y축 기준 histogram
+    _, noise_column, seat_height =  findStandard(crop_img, crop_img_arr_row,VERTICAL)  # noise, seat_height
+    #print(seat_height)
 
     # value without noise
     row_start, row_end = pointStartEnd(arr_row,noise_row)
@@ -70,8 +85,8 @@ def main():
 
     cropPoint_mainEnd.append((row_end,column_end))   # last Point
 
-    #print("cropPoint_mainStart : ",cropPoint_mainStart)
-    #print("cropPoint_mainEnd : ",cropPoint_mainEnd)
+    # print("cropPoint_mainStart : ",cropPoint_mainStart)
+    # print("cropPoint_mainEnd : ",cropPoint_mainEnd)
 
     # frist, Crop
 
@@ -84,9 +99,9 @@ def main():
         name_crop = first_seperator + str(i)
 
 
-        # cv2.imshow(name_crop, first_crop_img)
-        # cv2.imwrite(name_crop+".png",first_crop_img)
-        # cv2.waitKey()
+        cv2.imshow(name_crop, first_crop_img)
+        cv2.imwrite(name_crop+".png",first_crop_img)
+        cv2.waitKey()
 
         #################################################################
         #
@@ -134,10 +149,10 @@ def main():
             w_second = cropPoint_secondEnd[index_secondStart][1] - cropPoint_secondStart[index_secondStart][1]
             second_crop_img = first_crop_img[0: 0+h, cropPoint_secondStart[index_secondStart][1]:cropPoint_secondStart[index_secondStart][1]+w_second ]
 
-            # name_secondCrop = second_seperator + str(index_secondStart)+".png"
-            # cv2.imshow(name_secondCrop, second_crop_img)
-            # cv2.imwrite(name_secondCrop,second_crop_img)
-            # cv2.waitKey()
+            name_secondCrop = second_seperator + str(index_secondStart)+".png"
+            cv2.imshow(name_secondCrop, second_crop_img)
+            cv2.imwrite(name_secondCrop,second_crop_img)
+            cv2.waitKey()
 
             #################################################################
             #
@@ -152,7 +167,11 @@ def main():
             arr_third_row = np.sum(second_crop_img, axis=ROW).tolist()
             arr_third_column = np.sum(second_crop_img, axis=VERTICAL).tolist()
 
+            np.savetxt("arr_third_row", arr_third_row, fmt='%f')
+
             row_third_start, row_third_end = pointStartEnd(arr_third_row, noise_row)
+
+            # print("row_third_end ", row_third_end)
 
             column_third_start, column_third_end = pointStartEnd(arr_third_column, noise_column)
 
@@ -168,7 +187,6 @@ def main():
                                                                                          noise_column,
                                                                                          VERTICAL)
 
-
             cropPoint_ThirdStart.append((row_third_start, column_third_start))  # first Point
             for index_nonZero_third in range(len(row_noneZeroToNoneZero_ThirdImage)):
                     # from now on, don't consider (LEFT - RIGHT)  is greater than standard
@@ -181,6 +199,9 @@ def main():
             tmp_cropPoint_mainThirdStart.append(cropPoint_ThirdStart)
 
             cropPoint_ThirdEnd.append((row_third_end, column_third_end))  # last Point
+
+            # print("cropPoint_thirdStart : " , cropPoint_ThirdStart)
+            # print("cropPoint_thirdEnd : " , cropPoint_ThirdEnd)
 
             tmp_cropPoint_mainFourth_Start_one=[]
 
@@ -196,10 +217,10 @@ def main():
                                  cropPoint_ThirdStart[idex_thirStart][1]:cropPoint_ThirdStart[idex_thirStart][1] + w_third]
                 name_third_crop = third_seperator + str(idex_thirStart)
 
-                # cv2.imshow(name_third_crop, third_crop_img)
-                # cv2.imwrite(name_third_crop + ".png", third_crop_img)
-                # cv2.waitKey()
-                # cv2.destroyWindow(name_crop)
+                cv2.imshow(name_third_crop, third_crop_img)
+                cv2.imwrite(name_third_crop + ".png", third_crop_img)
+                cv2.waitKey()
+                cv2.destroyWindow(name_crop)
 
                 #################################################################
                 #
@@ -247,11 +268,11 @@ def main():
                     fourth_crop_img = third_crop_img[0: 0 + h, cropPoint_fourthStart[index_fourthStart][1]:
                                                                cropPoint_fourthStart[index_fourthStart][1] + w_fourth]
 
-                    # name_fourthCrop = fourth_seperator + str(index_fourthStart) + ".png"
-                    # cv2.imshow(name_fourthCrop, fourth_crop_img)
-                    # cv2.imwrite(name_fourthCrop, fourth_crop_img)
-                    # cv2.waitKey()
-                    # cv2.destroyWindow(name_fourthCrop)
+                    name_fourthCrop = fourth_seperator + str(index_fourthStart) + ".png"
+                    cv2.imshow(name_fourthCrop, fourth_crop_img)
+                    cv2.imwrite(name_fourthCrop, fourth_crop_img)
+                    cv2.waitKey()
+                    cv2.destroyWindow(name_fourthCrop)
 
             # cv2.destroyAllWindows()
 
@@ -285,9 +306,10 @@ def main():
     seatPosition = findSeatPosition(cropPoint_mainStart,cropPoint_mainSecondStart, cropPoint_mainThirdStart, cropPoint_mainFourthStart)
     # print(seatPosition)
 
-    # todo: delet this two line after test
-    detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
-    drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width)
+    # # todo: delet this two line after test
+    # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
+    # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width)
+
 
     return seatPosition, fullImage_height,fullImage_width,seat_height, seat_width
 
@@ -303,6 +325,8 @@ def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_
     #  one dimension  [ (row, col), status ]
     status = 1;
 
+    seat_width = seat_width *0.7
+
     for i in range(len(seatPosition)):
         row = int(seatPosition[i][0][0])  # tuple -> int to operand with int
         col = int(seatPosition[i][0][1])
@@ -311,9 +335,9 @@ def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_
         else: # unavailable
             draw.rectangle([(col, row), (col+ seat_width, row + seat_height)], (67, 65, 66) )  # (67, 65, 66) : gray
 
-    filename = "convert.gif"
+    filename = "convert.png"
     image.save(filename)
-    image.resize((200, 150)).save("convert_thumbnail.gif")
+    image.resize((200, 150)).save("convert_thumbnail.png")
 
     return
 
@@ -421,16 +445,22 @@ def findStandard(thresh_img, arr_row,orientation):
 
         if found_first and (arr_row[i] == 0 ):
             index_BeforeZero = i - 1
+
+            if index_firstNonzero == index_BeforeZero:
+                found_first = False
+                continue
             break;
 
     if orientation == VERTICAL :
         h = index_BeforeZero - index_firstNonzero    # index_firstNonzero - index_BeforeZero  -> negative value, so revers the position
         crop_img = img[index_firstNonzero:index_firstNonzero + h, 0:column_img]
         name += "column"
-        # cv2.imshow("To find column Noise ",crop_img)
-        # cv2.imwrite("partition _column.png ", crop_img)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+
+        ## debug code
+        cv2.imshow("To find column Noise ",crop_img)
+        cv2.imwrite("partition _column.png ", crop_img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
         seat_value = h
 
@@ -439,11 +469,10 @@ def findStandard(thresh_img, arr_row,orientation):
         w = index_BeforeZero - index_firstNonzero
         crop_img = img[0:row_img,index_firstNonzero:index_firstNonzero + w]
         name += "row"
-        # cv2.imshow("To find Row Noise",crop_img)
-        # cv2.imwrite("partition_row.png", crop_img)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-
+        cv2.imshow("To find Row Noise",crop_img)
+        cv2.imwrite("partition_row.png", crop_img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
         seat_value = w
 
     arr_sum= np.sum(crop_img, axis=orientation).tolist()  ## arr_histogram depending on orientation
@@ -456,7 +485,7 @@ def findStandard(thresh_img, arr_row,orientation):
     np.savetxt(name, arr_sum, fmt='%f')
     #print(max)
 
-    return max*0.6, seat_value  # noiseValue, seatSizeValue
+    return crop_img,max*0.6, seat_value  # noiseValue, seatSizeValue
 
     # 9600  7600  seven pc / 9600 * 0.6  include  7600
 
@@ -489,19 +518,24 @@ def findRange(arr,start,end, noise,orientation):
 
 def pointStartEnd(arr,noise):
     start = 0
-    end = 0
-    for i in range(len(arr)):
-        if arr[i] > noise:     #
-            start= i
+    end = len(arr)-1
+    for idex_ponintStart in range(len(arr)):
+        if arr[idex_ponintStart] > noise:     #
+            start= idex_ponintStart
             break;
 
-    for i in range(len(arr)-1,-1,-1):
-        if arr[i] > noise:
-            end= i
+    for idex_ponintEnd in range(len(arr)-1,-1,-1):
+        if arr[idex_ponintEnd] > noise:
+            # print( "i :",idex_ponintEnd)
+            # print("arr[i] : " ,arr[idex_ponintEnd])
+            end= idex_ponintEnd
             break;
+
     return start,end
-
+# #
 # main_return = main()
+#
+# print(main_return[0][0])
 #
 # #detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
 # cnt_seat,cnt_avail,cnt_unavail =detectAppendSeatStatus(main_return[0],main_return[1],main_return[2],main_return[3],main_return[4])
