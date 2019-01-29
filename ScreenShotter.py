@@ -2,7 +2,7 @@ import cv2
 import time
 
 from threading import Thread
-from PIL import ImageGrab
+from PIL import ImageGrab, ImageTk
 import threading
 import tkinter as tk
 import pyautogui
@@ -15,20 +15,20 @@ class GUI:
         global coords, image
         global points
 
-        self.setSeat = False
+        global setSeat
+        setSeat = False
 
         self.seatCnt = 0
 
         self.set_flag = False
 
         self.master = master
-        self.master.geometry("400x400")  ## gui 크기  가로 x 세로
-        self.master.resizable(False,False) ## 리사이즈 불가
+        self.master.geometry("400x600")  ## gui 크기  가로 x 세로
+        # self.master.resizable(False,False) ## 리사이즈 불가
         master.title("ScreenShotter 0.0.1")
         
         self.label = tk.Label(master)
 
-        fm = tk.Frame(master)
         self.areaBtn = tk.Button(master,text="영역 지정", command=lambda: GUI.grab_area(self, self.label))
         self.startBtn = tk.Button(master, text="시작", command= self.switchon)
         self.endBtn = tk.Button(master, text="중지", command=self.switchoff)
@@ -39,6 +39,14 @@ class GUI:
         self.areaLabel = tk.Label(master,text="입력 없음")
 
         self.cntLabel = tk.Label(master,text="전체 좌석 : 0 ")
+        self.setLabel = tk.Label(master,text="좌석 개수 확정 안됨")
+
+        self.canvas = tk.Canvas(master, width=100, height=200)
+        self.canvas.grid(row=0, column=1)
+        self.image_on_canvas = self.canvas.create_image(0, 0, anchor = tk.NW)
+
+        self.canvas.pack(side=tk.TOP)
+
 
         coords = tk.StringVar()
 
@@ -49,16 +57,15 @@ class GUI:
         self.areaBtn.pack(side=tk.TOP,anchor=tk.N )
         self.areaLabel.pack(side=tk.TOP)
         self.cntLabel.pack(side=tk.TOP)
-
+        self.setLabel.pack(side=tk.TOP)
         #self.label.pack(side=tk.BOTTOM)
         #print("2")
 
-    def resolve(self):
+    def resolve(self,selflabel):
         global setSeat
         def run():
-            if(self.setSeat == False):
-                #GUI.stuff(self)  # 이미지 저장
-
+            if(setSeat == False):
+                # try:
                 print('test...test...')
                 main_return = Analyze.main()
                 # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
@@ -70,35 +77,56 @@ class GUI:
                 self.seatCnt = cnt_seat
                 Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
 
+                ## ????
+                # self.canvas.itemconfig(self.image_on_canvas, image="convert_thumbnail.gif")
+                # self.canvas.update_idletasks()
+                ##todo: show the convert_thumbnail.gif
+                # self.canvas.config(image="convert_thumbnail.gif")
+                #
+                # self.master.update_idletasks()
+                # image = tk.PhotoImage(file="convert_thumbnail.gif")
+                # label = tk.Label(self.master, image=image)
+                # label.pack(side=tk.top)
+
+                # except:
+                #     popupmsg("영역이 잘못 지정 되었습니다. 다시 진행해주세요")
+
+                print("test ends ")
 
             else:
                 while (switch == True):
                     GUI.stuff(self)
                     print('resolve...resolve...')
-                    main_return = Analyze.main()
-                    # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
-                    cnt_seat, cnt_avail, cnt_unavail = Analyze.detectAppendSeatStatus(main_return[0], main_return[1],
-                                                                              main_return[2], main_return[3],
-                                                                              main_return[4])
-                    # popup, another page, etc ....
-                    if( cnt_seat != self.seatCnt):
-                        time.sleep(5)
-                        continue
-                    else:
-                        Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
-                        time.sleep(5)
+                    try:
+                        main_return = Analyze.main()
+                        # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
+                        cnt_seat, cnt_avail, cnt_unavail = Analyze.detectAppendSeatStatus(main_return[0], main_return[1],
+                                                                                  main_return[2], main_return[3],
+                                                                                  main_return[4])
+                        # handle  popup, another page, etc ....
+                        if( cnt_seat != self.seatCnt):
+                            time.sleep(5)
+                            continue
+                        else:
+                            Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
+                            time.sleep(5)
 
-                    if switch == False:
+                        if switch == False:
+                            break
+                    except :
+                        popupmsg("좌석 화면을 맨 앞에 띄워주세요")
+                        print(" ends ")
                         break
 
         thread = threading.Thread(target=run)
         thread.start()
 
+
     def switchon(self):
         global switch
         switch = True
         print ('switch on')
-        self.resolve()
+        self.resolve(self.label)
 
     def switchoff(self):
         print('switch off')
@@ -107,10 +135,14 @@ class GUI:
 
     def setSeatCnt(self):
         print('set SeatCnt')
-        self.setSeat = True
+        self.setLabel.config(text="좌석 개수 확정 됨")
+        global setSeat
+        setSeat = True
     def unsetSeatCnt(self):
         print('unset SeatCnt')
-        self.setseat = False
+        self.setLabel.config(text="좌석 개수 확정 안됨")
+        global setSeat
+        setSeat = False
 
 
     def stuff(self):
@@ -182,12 +214,11 @@ class GUI:
                         GUI.stuff(self)
 
 
-                        ##selflabel.image = tk.PhotoImage(file="image.png")
-                        ##selflabel['image'] = selflabel.image
+
 
                         selflabel.image = tk.PhotoImage(file="thumbnail.gif")
                         selflabel['image'] = selflabel.image
-                        selflabel.pack(side=tk.LEFT)
+                        selflabel.pack(side=tk.TOP)
 
                         
                         
@@ -203,6 +234,16 @@ class GUI:
                 
             window.update_idletasks()
             window.update()
+
+
+def popupmsg(msg):
+    popup = tk.Toplevel(root)
+    popup.wm_title("!")
+    popup.tkraise(root)  # This just tells the message to be on top of the root window.
+    tk.Label(popup, text=msg).pack(side="top", fill="x", pady=10)
+    tk.Button(popup, text="Okay", command=popup.destroy).pack()
+    # Notice that you do not use mainloop() here on the Toplevel() window
+
 
 
 root = tk.Tk()
