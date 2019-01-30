@@ -2,7 +2,7 @@ import cv2
 import time
 
 from threading import Thread
-from PIL import ImageGrab, ImageTk
+from PIL import ImageGrab, ImageTk, Image
 import threading
 import tkinter as tk
 import pyautogui
@@ -41,8 +41,8 @@ class GUI:
         self.cntLabel = tk.Label(master,text="전체 좌석 : 0 ")
         self.setLabel = tk.Label(master,text="좌석 개수 확정 안됨")
 
-        self.canvas = tk.Canvas(master, width=100, height=200)
-        self.canvas.grid(row=0, column=1)
+        self.canvas = tk.Canvas(master, width=200, height=200)
+        self.canvas.grid(row=1, column=1)
         self.image_on_canvas = self.canvas.create_image(0, 0, anchor = tk.NW)
 
         self.canvas.pack(side=tk.TOP)
@@ -78,15 +78,17 @@ class GUI:
                 Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
 
                 ## ????
-                # self.canvas.itemconfig(self.image_on_canvas, image="convert_thumbnail.gif")
-                # self.canvas.update_idletasks()
+                # photo = tk.Image.PhotoImage("convert_thumbnail.gif")
+                # photo_image = ImageTk.PhotoImage(photo)
+                # self.canvas.create_image(26,26,image="convert_thumbnail.gif")
+                # self.canvas.itemconfig(self.image_on_canvas, image=photo_image)
                 ##todo: show the convert_thumbnail.gif
-                # self.canvas.config(image="convert_thumbnail.gif")
-                #
-                # self.master.update_idletasks()
-                # image = tk.PhotoImage(file="convert_thumbnail.gif")
-                # label = tk.Label(self.master, image=image)
-                # label.pack(side=tk.top)
+                # Read an image from my Desktop
+                self.image = Image.open("C:\\Users\\aaa\\PycharmProjects\\Color_Analyze\\convert_thumbnail.gif")
+                self.photo = ImageTk.PhotoImage(self.image)
+                # Create the image on the Canvas
+                self.canvas.create_image(0,0,image=self.photo,anchor = tk.NW)
+                self.canvas.update_idletasks()
 
                 # except:
                 #     popupmsg("영역이 잘못 지정 되었습니다. 다시 진행해주세요")
@@ -114,7 +116,7 @@ class GUI:
                         if switch == False:
                             break
                     except :
-                        popupmsg("좌석 화면을 맨 앞에 띄워주세요")
+                        popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
                         print(" ends ")
                         break
 
