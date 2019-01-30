@@ -1,3 +1,6 @@
+import simplejson
+import time
+
 import cv2
 import matplotlib.pyplot as plt #importing matplotlib
 import numpy as np
@@ -29,6 +32,7 @@ def main():
     cropPoint_mainFourthStart = []
 
     image = cv2.imread("image.png",0) # 뒤의 0은 gray 색으로 바꾼것을 의미
+    f = open("log.txt", "a+")
 
     fullImage_height, fullImage_width = image.shape[:2]
 
@@ -38,14 +42,15 @@ def main():
     ret,thresh = cv2.threshold(thresh0.copy(),0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU) # one more threshold by THRESH_BINARY+cv2.THRESH_OTSU OPTION
 
     # cv2.imshow("image",thresh)
-    # cv2.imwrite("thresh.png",thresh)
+    cv2.imwrite("thresh.png",thresh)  #for debug
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " thresh saved\n")
     # cv2.waitKey()
     # cv2.destroyAllWindows()
 
     # get index and value ( find index '0' value )
     arr_ver = np.sum(thresh, axis=0).tolist()  ## x축 기준 histogram
     arr_row = np.sum(thresh,axis=1).tolist()  ## y축 기준 histogram
-
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Beginning   arr_ver, arr_row saved\n")
     # np.savetxt("arr_row", arr_row, fmt='%f')
     # plt.plot(arr_row)
     # plt.savefig("arr_row"+"_plot.png")
@@ -57,25 +62,43 @@ def main():
     # so, we assume that first column line is simple
     # noise, seat size
     crop_img,noise_row, seat_width =  findStandard(thresh, arr_ver, ROW )
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Beginning   noise row : %f, seat_width  : %f \n"
+            % (noise_row, seat_width))
+
     # print("noise row  : " , noise_row)
     # print(seat_width)
     crop_img_arr_row = np.sum(crop_img, axis=1).tolist()  ## y축 기준 histogram
     _, noise_column, seat_height =  findStandard(crop_img, crop_img_arr_row,VERTICAL)  # noise, seat_height
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Beginning   noise_column : %f, seat_height  : %f \n"
+            % (noise_column, seat_height))
+
     #print(seat_height)
 
     # value without noise
     row_start, row_end = pointStartEnd(arr_row,noise_row)
     column_start, column_end= pointStartEnd(arr_ver,noise_column)
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Beginning   row_start : %f, row_end  : %f "
+                                                                "column_start : %f column_end : %f\n "
+            % (noise_column, seat_height, column_start, column_end))
 
     # [ ( index_justBeforeZero , index_startNoneZero , length ) , ..... , ()  ]
     row_noneZeroToNoneZero_fullImage, row_standardForCrop = findRange(arr_row,row_start,row_end, noise_row, ROW) #findRange( arr, startPoint, endPoint, noise, orientation)
     col_noneZeroToNoneZero_fullImage, column_standardForCrop = findRange(arr_ver,column_start,column_end, noise_column, VERTICAL)
 
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S row_noneZeroToNoneZero_fullImage", time.gmtime()))
+    simplejson.dump(row_noneZeroToNoneZero_fullImage, f)
+    f.write(" \n")
+
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S row_standardForCrop", time.gmtime()))
+    simplejson.dump(row_standardForCrop, f)
+    f.write(" \n")
     #################################################################
     #
     #    first,   crop point
     #
     #################################################################
+
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime())+ " First, crop Point in \n")
 
     cropPoint_mainStart.append((row_start,column_start))   # first Point
     for i in range(len(row_noneZeroToNoneZero_fullImage)):
@@ -85,14 +108,23 @@ def main():
 
     cropPoint_mainEnd.append((row_end,column_end))   # last Point
 
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime())+ " First, cropPoint_mainStart length : %d \n"
+            % len(cropPoint_mainStart) )
+
+
     # print("cropPoint_mainStart : ",cropPoint_mainStart)
     # print("cropPoint_mainEnd : ",cropPoint_mainEnd)
 
     # frist, Crop
 
     w = cropPoint_mainEnd[0][1] - cropPoint_mainStart[0][1]   # w is fixed
+
+
     first_seperator = "first Crop Image "
     for i in range(len(cropPoint_mainStart)):
+        f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " First Crop in  \n")
+        f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " first crop %d \n" % i)
+
         h = cropPoint_mainEnd[i][0] - cropPoint_mainStart[i][0]
         first_crop_img = thresh[cropPoint_mainStart[i][0]: cropPoint_mainStart[i][0]+h , cropPoint_mainStart[i][1]:cropPoint_mainStart[i][1]+w]
         height_first_crop_img,width_first_crop_img = first_crop_img.shape[:2]
@@ -108,6 +140,7 @@ def main():
         #    Second,  second crop point
         #
         #################################################################
+        f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " Second, crop Point in \n")
 
         #print("Second Crop in ")
         cropPoint_secondStart = []   # initialize
@@ -134,6 +167,9 @@ def main():
 
         cropPoint_secondEnd.append((row_second_start, column_second_end))  # last Point
 
+        f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " Second, cropPoint_mainSecondStart length : %d \n"
+                % len(cropPoint_mainSecondStart))
+
         #print("cropPoint_secondStart : " , cropPoint_secondStart)
         #print("cropPoint_secondEnd : " , cropPoint_secondEnd)
 
@@ -146,6 +182,10 @@ def main():
         second_seperator = "second Crop Image "
         h_second = row_second_end - row_second_start
         for index_secondStart in range(len(cropPoint_secondStart)):
+
+            f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " Second Crop in  \n")
+            f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " Second crop %d \n" % index_secondStart)
+
             w_second = cropPoint_secondEnd[index_secondStart][1] - cropPoint_secondStart[index_secondStart][1]
             second_crop_img = first_crop_img[0: 0+h, cropPoint_secondStart[index_secondStart][1]:cropPoint_secondStart[index_secondStart][1]+w_second ]
 
@@ -159,6 +199,8 @@ def main():
             #    Third,  Third crop point
             #
             #################################################################
+
+            f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " Third, crop Point in \n")
 
             #print("Third Crop in ")
             cropPoint_ThirdStart = [] # initialize
@@ -200,6 +242,10 @@ def main():
 
             cropPoint_ThirdEnd.append((row_third_end, column_third_end))  # last Point
 
+            f.write(
+                time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " Third, cropPoint_ThirdEnd length : %d \n"
+                % len(cropPoint_ThirdEnd))
+
             # print("cropPoint_thirdStart : " , cropPoint_ThirdStart)
             # print("cropPoint_thirdEnd : " , cropPoint_ThirdEnd)
 
@@ -210,6 +256,10 @@ def main():
             w_third = cropPoint_ThirdEnd[0][1] - cropPoint_ThirdStart[0][1]  # w is fixed
             third_seperator = "Third Crop Image "
             for idex_thirStart in range(len(cropPoint_ThirdStart)):
+
+                f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " Third Crop in  \n")
+                f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " Third crop %d \n" % idex_thirStart)
+
                 # from now on, don't consider (LEFT - RIGHT)  is greater than standard
                 # just cut
                 h_third = cropPoint_ThirdEnd[idex_thirStart][0] - cropPoint_ThirdStart[idex_thirStart][0]
@@ -227,6 +277,7 @@ def main():
                 #    Fourth,  get fourth point
                 #
                 #################################################################
+                f.write(time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " Fourth, crop Point in \n")
 
                 #print("Fourth Crop in ")
                 cropPoint_fourthStart= [] # initialize
@@ -258,6 +309,9 @@ def main():
 
                 cropPoint_fourthEnd.append((row_fourth_start, column_fourth_end))  # last Point
 
+                f.write(
+                    time.strftime("%Y-%m-%d %H:%M:%S ", time.gmtime()) + " Fourth, cropPoint_fourthStart length : %d \n"
+                    % len(cropPoint_fourthStart))
 
                 # Fourth , Crop
 
@@ -310,7 +364,7 @@ def main():
     # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
     # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width)
 
-
+    f.close()
     return seatPosition, fullImage_height,fullImage_width,seat_height, seat_width
 
 def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):

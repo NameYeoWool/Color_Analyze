@@ -1,3 +1,5 @@
+import os
+
 import cv2
 import time
 
@@ -23,7 +25,7 @@ class GUI:
         self.set_flag = False
 
         self.master = master
-        self.master.geometry("400x600")  ## gui 크기  가로 x 세로
+        self.master.geometry("400x700")  ## gui 크기  가로 x 세로
         # self.master.resizable(False,False) ## 리사이즈 불가
         master.title("ScreenShotter 0.0.1")
         
@@ -64,41 +66,44 @@ class GUI:
     def resolve(self,selflabel):
         global setSeat
         def run():
+            f = open("log.txt", "a+")
             if(setSeat == False):
-                # try:
-                print('test...test...')
-                main_return = Analyze.main()
-                # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
-                cnt_seat, cnt_avail, cnt_unavail = Analyze.detectAppendSeatStatus(main_return[0], main_return[1],
-                                                                                  main_return[2], main_return[3],
-                                                                                  main_return[4])
-                # self.areaLabel.config(text=str(box))
-                self.cntLabel.config(text="전체 좌석 : "+str(cnt_seat))
-                self.seatCnt = cnt_seat
-                Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
+                try:
+                    print('test...test...')
 
-                ## ????
-                # photo = tk.Image.PhotoImage("convert_thumbnail.gif")
-                # photo_image = ImageTk.PhotoImage(photo)
-                # self.canvas.create_image(26,26,image="convert_thumbnail.gif")
-                # self.canvas.itemconfig(self.image_on_canvas, image=photo_image)
-                ##todo: show the convert_thumbnail.gif
-                # Read an image from my Desktop
-                self.image = Image.open("C:\\Users\\aaa\\PycharmProjects\\Color_Analyze\\convert_thumbnail.gif")
-                self.photo = ImageTk.PhotoImage(self.image)
-                # Create the image on the Canvas
-                self.canvas.create_image(0,0,image=self.photo,anchor = tk.NW)
-                self.canvas.update_idletasks()
+                    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Test..... Test...\n")
 
-                # except:
-                #     popupmsg("영역이 잘못 지정 되었습니다. 다시 진행해주세요")
+                    main_return = Analyze.main()
+                    # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
+                    cnt_seat, cnt_avail, cnt_unavail = Analyze.detectAppendSeatStatus(main_return[0], main_return[1],
+                                                                                      main_return[2], main_return[3],
+                                                                                      main_return[4])
+                    # self.areaLabel.config(text=str(box))
+                    self.cntLabel.config(text="전체 좌석 : "+str(cnt_seat))
+                    self.seatCnt = cnt_seat
+                    Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
 
+                    # Read an image from my Desktop
+                    path = os.getcwd() # path now
+                    self.image = Image.open(path+"\\convert_thumbnail.gif")
+                    self.photo = ImageTk.PhotoImage(self.image)
+                    # Create the image on the Canvas
+                    self.canvas.create_image(0,0,image=self.photo,anchor = tk.NW)
+                    self.canvas.update_idletasks()
+
+                except Exception as e:
+                    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Test  Error : %s \n"%e)
+                    popupmsg("영역이 잘못 지정 되었습니다. 다시 진행해주세요")
+
+
+                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Test  Ends\n" )
                 print("test ends ")
 
             else:
                 while (switch == True):
                     GUI.stuff(self)
                     print('resolve...resolve...')
+                    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve.... Resolve... \n")
                     try:
                         main_return = Analyze.main()
                         # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
@@ -115,10 +120,15 @@ class GUI:
 
                         if switch == False:
                             break
-                    except :
+                    except Exception as e:
+                        f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve  Error : %s \n" % e)
                         popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
                         print(" ends ")
                         break
+
+                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resovle  Ends\n")
+
+            f.close()
 
         thread = threading.Thread(target=run)
         thread.start()
