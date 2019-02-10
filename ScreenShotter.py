@@ -158,7 +158,7 @@ class GUI:
                                     else:
 
                                         f.write(time.strftime("%Y-%m-%d %H:%M:%S",
-                                                              time.gmtime()) + " pre and now seatPostion is different/ index : %d \n")
+                                                              time.gmtime()) + " pre and now seatPostion is different\n")
                                         same = False
                                         break
 
@@ -184,6 +184,7 @@ class GUI:
                     except Exception as e:
                         f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve  Error : %s \n" % e)
                         popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요 \n Error :%s" % e)
+                        time.sleep(5)
                         print(" ends ")
 
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : False _ while break\n")
@@ -326,20 +327,23 @@ def popuphelp():
 def popupmsg(msg):
     popup = tk.Toplevel(root)
 
-    # Gets the requested values of the height and widht.
-    windowWidth = root.winfo_reqwidth()
-    windowHeight = root.winfo_reqheight()
-    print("Width", windowWidth, "Height", windowHeight)
+    # Apparently a common hack to get the window size. Temporarily hide the
+    # window to avoid update_idletasks() drawing the window in the wrong
+    # position.
+    # root.withdraw()
+    root.update_idletasks()  # Update "requested size" from geometry manager
 
-    # Gets both half the screen width/height and window width/height
-    positionRight = int(root.winfo_screenwidth() / 2 - windowWidth / 2)
-    positionDown = int(root.winfo_screenheight() / 2 - windowHeight / 2)
+    x = (root.winfo_screenwidth() - root.winfo_reqwidth()) / 2
+    y = (root.winfo_screenheight() - root.winfo_reqheight()) / 2
+    popup.geometry("+%d+%d" % (x, y))
 
-    # Positions the window in the center of the page.
-    root.geometry("+{}+{}".format(positionRight, positionDown))
+    # This seems to draw the window frame immediately, so only call deiconify()
+    # after setting correct window position
+    root.deiconify()
 
-    # It makes the window come to the front
-    # when the window is generated, and it won't keep it always be in the front.
+
+    # when the window is generated
+    # be in the front.
     root.attributes('-topmost', True)
     root.after_idle(root.attributes, '-topmost', False)
 
