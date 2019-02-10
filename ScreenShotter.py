@@ -27,7 +27,7 @@ class GUI:
         self.master = master
         self.master.geometry("400x700")  ## gui 크기  가로 x 세로
         # self.master.resizable(False,False) ## 리사이즈 불가
-        master.title("ScreenShotter 0.0.1")
+        master.title("Watcher(와처) manager program")
         
         self.label = tk.Label(master)
 
@@ -37,11 +37,14 @@ class GUI:
 
         self.setBtn = tk.Button(master ,width= 20,text="좌석 개수 확정", command=self.setSeatCnt)
         self.resetBtn = tk.Button(master,width= 20, text="좌석 개수 재설정", command=self.unsetSeatCnt)
+        self.helpBtn = tk.Button(master,width= 20, text="사용법", command=popuphelp)
+
 
         self.areaLabel = tk.Label(master,text="입력 없음")
 
         self.cntLabel = tk.Label(master,text="전체 좌석 : 0 ")
         self.setLabel = tk.Label(master,text="좌석 개수 확정 안됨")
+
 
         self.canvas = tk.Canvas(master, width=200, height=200)
         self.canvas.grid(row=1, column=1)
@@ -60,6 +63,7 @@ class GUI:
         self.areaLabel.pack(side=tk.TOP)
         self.cntLabel.pack(side=tk.TOP)
         self.setLabel.pack(side=tk.TOP)
+        self.helpBtn.pack(side=tk.BOTTOM)
         #self.label.pack(side=tk.BOTTOM)
         #print("2")
 
@@ -112,6 +116,7 @@ class GUI:
                                                                                   main_return[4])
                         # handle  popup, another page, etc ....
                         if( cnt_seat != self.seatCnt):
+                            popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
                             time.sleep(5)
                             continue
                         else:
@@ -247,9 +252,29 @@ class GUI:
             window.update_idletasks()
             window.update()
 
+def popuphelp():
+    msg ="1. '영역 설정' 버튼을 클릭하세요 " \
+         "\n2. 하단에 뜨는 캡처 화면이 전체 좌석을 포함하는지 확인하세요" \
+         "\n3. 2에서 문제가 없을 시, '시작' 버튼을 눌러 test 하세요" \
+         "\n4. 3에서 문제가 없을 시, '좌석 개수 확정' 버튼을 클릭하세요" \
+         "\n5. '시작' 버튼을 한 번 더 눌러주세요" \
+         "\n6. 경고창이 뜰 경우, 안내에 따라 지시사항을 이행해 주세요." \
+         "\n\n참고사항 : 문제가 있을 시, 종료하고 다시 시작해주세요"
+    popup = tk.Toplevel(root)
+    popup.wm_title("!")
+    popup.tkraise(root)  # This just tells the message to be on top of the root window.
+    tk.Label(popup, text=msg).pack(side="top", fill="x", pady=10)
+    tk.Button(popup, text="Okay", command=popup.destroy).pack()
+    # Notice that you do not use mainloop() here on the Toplevel() window
 
 def popupmsg(msg):
     popup = tk.Toplevel(root)
+
+    # It makes the window come to the front
+    # when the window is generated, and it won't keep it always be in the front.
+    root.attributes('-topmost', True)
+    root.after_idle(root.attributes, '-topmost', False)
+
     popup.wm_title("!")
     popup.tkraise(root)  # This just tells the message to be on top of the root window.
     tk.Label(popup, text=msg).pack(side="top", fill="x", pady=10)
@@ -259,5 +284,7 @@ def popupmsg(msg):
 
 
 root = tk.Tk()
+root.lift()
 my_gui = GUI(root)
+
 root.mainloop()
