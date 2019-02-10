@@ -2,7 +2,6 @@ import simplejson
 import time
 
 import cv2
-import matplotlib.pyplot as plt #importing matplotlib
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
