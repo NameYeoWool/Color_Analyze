@@ -3,7 +3,6 @@ import os
 import cv2
 import time
 
-from threading import Thread
 from PIL import ImageGrab, ImageTk, Image
 import threading
 import tkinter as tk
@@ -67,11 +66,13 @@ class GUI:
         #self.label.pack(side=tk.BOTTOM)
         #print("2")
 
-    def resolve(self,selflabel):
+    def resolve(self):
         global setSeat
         def run():
             f = open("log.txt", "a+")
+            # before seat Count set
             if(setSeat == False):
+                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " setSeat : False \n")
                 try:
                     print('test...test...')
 
@@ -103,8 +104,13 @@ class GUI:
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Test  Ends\n" )
                 print("test ends ")
 
+            # After seat Count set
             else:
+                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " setSeat : True \n")
+                pre_seat_position = [] #initialize
+
                 while (switch == True):
+                    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : True \n")
                     GUI.stuff(self)
                     print('resolve...resolve...')
                     f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve.... Resolve... \n")
@@ -116,21 +122,71 @@ class GUI:
                                                                                   main_return[4])
                         # handle  popup, another page, etc ....
                         if( cnt_seat != self.seatCnt):
-                            popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
+                            f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " cnt_seat != self.seatCnt\n")
+                            popupmsg("좌석 개수가 지정한 개수와 맞지 않습니다.\n좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
                             time.sleep(5)
                             continue
+                        # draw the seat layout and fill the color
                         else:
-                            Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
-                            time.sleep(5)
+                            f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " cnt_seat == self.seatCnt\n")
+                            # if seatStatus is not changed,
+                            # don't have to draw again
+                            if not pre_seat_position : # empty
+                                f.write(
+                                    time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " preSeatPosition empty\n")
+                                # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
+                                Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
+                                pre_seat_position = main_return[0] # set preSeatPosition
+                                time.sleep(5)
 
+                            else: # not empty
+                                f.write(
+                                    time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " preSeatPosition not empty\n")
+                                # check seat status
+                                # previous and now
+
+                                now_seat_position = main_return[0] # seatPosition
+                                # seat Position element
+                                #  two dimension  [ [ ] , [] , [] , ..... [] ]
+                                #  one dimension [ (row, col) , status ]
+                                status = 1
+                                same = True
+                                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " check pre and now SeatPosition \n")
+                                for index in len(now_seat_position):
+                                    if now_seat_position[index][status] == pre_seat_position[index][status]:
+                                        continue
+                                    else:
+
+                                        f.write(time.strftime("%Y-%m-%d %H:%M:%S",
+                                                              time.gmtime()) + " pre and now seatPostion is different/ index : %d \n")
+                                        same = False
+                                        break
+
+                                if not same:
+                                    # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
+
+                                    f.write(time.strftime("%Y-%m-%d %H:%M:%S",
+                                                          time.gmtime()) + " draw again \n")
+                                    Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3],
+                                                     main_return[4])
+                                    pre_seat_position = main_return[0]  # set preSeatPosition
+                                    time.sleep(5)
+                                else : # same
+                                    f.write(time.strftime("%Y-%m-%d %H:%M:%S",
+                                                          time.gmtime()) + " don't have to draw again \n")
+
+
+                        # if stop button clicked
                         if switch == False:
-                            break
+                            f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : False \n")
+                            break  # while break
+
                     except Exception as e:
                         f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve  Error : %s \n" % e)
-                        popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
+                        popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요 \n Error :%s" % e)
                         print(" ends ")
-                        break
 
+                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : False _ while break\n")
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resovle  Ends\n")
 
             f.close()
@@ -143,7 +199,7 @@ class GUI:
         global switch
         switch = True
         print ('switch on')
-        self.resolve(self.label)
+        self.resolve()
 
     def switchoff(self):
         print('switch off')
@@ -269,6 +325,18 @@ def popuphelp():
 
 def popupmsg(msg):
     popup = tk.Toplevel(root)
+
+    # Gets the requested values of the height and widht.
+    windowWidth = root.winfo_reqwidth()
+    windowHeight = root.winfo_reqheight()
+    print("Width", windowWidth, "Height", windowHeight)
+
+    # Gets both half the screen width/height and window width/height
+    positionRight = int(root.winfo_screenwidth() / 2 - windowWidth / 2)
+    positionDown = int(root.winfo_screenheight() / 2 - windowHeight / 2)
+
+    # Positions the window in the center of the page.
+    root.geometry("+{}+{}".format(positionRight, positionDown))
 
     # It makes the window come to the front
     # when the window is generated, and it won't keep it always be in the front.
