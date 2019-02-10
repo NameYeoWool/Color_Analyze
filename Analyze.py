@@ -370,7 +370,7 @@ def main():
 def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
 
 
-    image = Image.new("RGB", (fullImage_width, fullImage_height), (0,0,0))
+    image = Image.new("RGB", (fullImage_width , fullImage_height), (0,0,0))
     draw = ImageDraw.Draw(image)
 
     # here seatPosition list has the status
@@ -379,13 +379,13 @@ def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_
     #  one dimension  [ (row, col), status ]
     status = 1;
 
-    seat_width = seat_width *0.7
+    seat_width = seat_width *0.7 # to avoid overlay
 
     for i in range(len(seatPosition)):
         row = int(seatPosition[i][0][0])  # tuple -> int to operand with int
         col = int(seatPosition[i][0][1])
         if seatPosition[i][status] == AVAILABLE:
-            draw.rectangle([(col, row), (col + seat_width, row+ seat_height)], (64, 132, 34) )  # (64, 132, 34) : green
+            draw.rectangle([(col, row), (col + seat_width, row+ seat_height)], (204, 51, 204) )  # (64, 132, 34) : green
         else: # unavailable
             draw.rectangle([(col, row), (col+ seat_width, row + seat_height)], (67, 65, 66) )  # (67, 65, 66) : gray
 
@@ -425,10 +425,10 @@ def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_
         v_mean = np.mean(v)
 
         if v_mean > v_Standard : # seat unavailable
-            seatPosition[i].append(AVAILABLE)      # [ (row, col), status ]
+            seatPosition[i].append(UNAVAILABLE)      # [ (row, col), status ]
             cnt_unavail += 1
         else:
-            seatPosition[i].append(UNAVAILABLE)
+            seatPosition[i].append(AVAILABLE)
             cnt_avail += 1
 
     return cnt_seat, cnt_avail,cnt_unavail

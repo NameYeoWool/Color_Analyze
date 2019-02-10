@@ -98,7 +98,7 @@ class GUI:
 
                 except Exception as e:
                     f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Test  Error : %s \n"%e)
-                    popupmsg("영역이 잘못 지정 되었습니다. 다시 진행해주세요")
+                    popupmsg("영역이 잘못 지정 되었습니다. 다시 진행해주세요 \n Error : %s" % e)
 
 
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Test  Ends\n" )
