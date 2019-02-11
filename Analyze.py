@@ -2,6 +2,7 @@ import simplejson
 import time
 
 import cv2
+import matplotlib.pyplot as plt #importing matplotlib
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
@@ -378,15 +379,26 @@ def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_
     #  one dimension  [ (row, col), status ]
     status = 1;
 
-    seat_width = seat_width *0.7 # to avoid overlay
+    seat_width = seat_width * 0.6
 
     for i in range(len(seatPosition)):
         row = int(seatPosition[i][0][0])  # tuple -> int to operand with int
         col = int(seatPosition[i][0][1])
         if seatPosition[i][status] == AVAILABLE:
             draw.rectangle([(col, row), (col + seat_width, row+ seat_height)], (204, 51, 204) )  # (64, 132, 34) : green
+            # image.save("drawimage.png")
+            # dm = cv2.imread("drawimage.png")
+            # cv2.imshow('test',dm)
+            # cv2.waitKey()
+            # cv2.destroyAllWindows()
         else: # unavailable
             draw.rectangle([(col, row), (col+ seat_width, row + seat_height)], (67, 65, 66) )  # (67, 65, 66) : gray
+            # image.save("drawimage.png")
+            # dm = cv2.imread("drawimage.png")
+            # cv2.imshow('test', dm)
+            # cv2.waitKey()
+            # cv2.destroyAllWindows()
+
 
     filename = "convert.gif"
     image.save(filename)
@@ -416,6 +428,11 @@ def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_
         # '0' mean first element of one dimension
         # that is tuple
         roi = origin_image[seatPosition[i][0][r]:seatPosition[i][0][r]+seat_height, seatPosition[i][0][c]:seatPosition[i][0][c]+seat_width]
+
+        # cv2.imshow("roi",roi)
+        # cv2.waitKey()
+        # cv2.destroyAllWindows()
+
 
         # convert it into HSV
         hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)

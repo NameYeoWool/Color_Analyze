@@ -124,7 +124,7 @@ class GUI:
                         if( cnt_seat != self.seatCnt):
                             f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " cnt_seat != self.seatCnt\n")
                             popupmsg("좌석 개수가 지정한 개수와 맞지 않습니다.\n좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
-                            time.sleep(5)
+                            time.sleep(20)
                             continue
                         # draw the seat layout and fill the color
                         else:
@@ -137,7 +137,7 @@ class GUI:
                                 # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
                                 Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
                                 pre_seat_position = main_return[0] # set preSeatPosition
-                                time.sleep(5)
+                                time.sleep(20)
 
                             else: # not empty
                                 f.write(
@@ -170,7 +170,7 @@ class GUI:
                                     Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3],
                                                      main_return[4])
                                     pre_seat_position = main_return[0]  # set preSeatPosition
-                                    time.sleep(5)
+                                    time.sleep(20)
                                 else : # same
                                     f.write(time.strftime("%Y-%m-%d %H:%M:%S",
                                                           time.gmtime()) + " don't have to draw again \n")
@@ -184,7 +184,7 @@ class GUI:
                     except Exception as e:
                         f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve  Error : %s \n" % e)
                         popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요 \n Error :%s" % e)
-                        time.sleep(5)
+                        time.sleep(20)
                         print(" ends ")
 
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : False _ while break\n")
