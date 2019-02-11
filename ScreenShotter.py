@@ -69,14 +69,17 @@ class GUI:
     def resolve(self):
         global setSeat
         def run():
-            f = open("log.txt", "a+")
             # before seat Count set
             if(setSeat == False):
+                f = open("log.txt", "a+")
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " setSeat : False \n")
+                f.close()
                 try:
                     print('test...test...')
 
+                    f = open("log.txt", "a+")
                     f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Test..... Test...\n")
+                    f.close()
 
                     main_return = Analyze.main()
                     # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
@@ -97,23 +100,30 @@ class GUI:
                     self.canvas.update_idletasks()
 
                 except Exception as e:
+                    f = open("log.txt", "a+")
                     f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Test  Error : %s \n"%e)
+                    f.close()
                     popupmsg("영역이 잘못 지정 되었습니다. 다시 진행해주세요 \n Error : %s" % e)
 
-
+                f = open("log.txt", "a+")
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Test  Ends\n" )
+                f.close()
                 print("test ends ")
 
             # After seat Count set
             else:
+                f = open("log.txt", "a+")
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " setSeat : True \n")
+                f.close()
                 pre_seat_position = [] #initialize
 
                 while (switch == True):
+                    f = open("log.txt", "a+")
                     f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : True \n")
                     GUI.stuff(self)
                     print('resolve...resolve...')
                     f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve.... Resolve... \n")
+                    f.close()
                     try:
                         main_return = Analyze.main()
                         # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
@@ -122,26 +132,35 @@ class GUI:
                                                                                   main_return[4])
                         # handle  popup, another page, etc ....
                         if( cnt_seat != self.seatCnt):
+                            f = open("log.txt", "a+")
                             f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " cnt_seat != self.seatCnt\n")
+                            f.close()
+
                             popupmsg("좌석 개수가 지정한 개수와 맞지 않습니다.\n좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
                             time.sleep(20)
                             continue
                         # draw the seat layout and fill the color
                         else:
+                            f = open("log.txt", "a+")
                             f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " cnt_seat == self.seatCnt\n")
+                            f.close()
                             # if seatStatus is not changed,
                             # don't have to draw again
                             if not pre_seat_position : # empty
+                                f = open("log.txt", "a+")
                                 f.write(
                                     time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " preSeatPosition empty\n")
+                                f.close()
                                 # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
                                 Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
                                 pre_seat_position = main_return[0] # set preSeatPosition
                                 time.sleep(20)
 
                             else: # not empty
+                                f = open("log.txt", "a+")
                                 f.write(
                                     time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " preSeatPosition not empty\n")
+                                f.close()
                                 # check seat status
                                 # previous and now
 
@@ -151,46 +170,59 @@ class GUI:
                                 #  one dimension [ (row, col) , status ]
                                 status = 1
                                 same = True
+                                f = open("log.txt", "a+")
                                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " check pre and now SeatPosition \n")
-                                for index in len(now_seat_position):
+                                f.close()
+
+
+                                for index in range(len(now_seat_position)):
                                     if now_seat_position[index][status] == pre_seat_position[index][status]:
                                         continue
                                     else:
-
+                                        f = open("log.txt", "a+")
                                         f.write(time.strftime("%Y-%m-%d %H:%M:%S",
                                                               time.gmtime()) + " pre and now seatPostion is different\n")
+                                        f.close()
                                         same = False
                                         break
 
                                 if not same:
                                     # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
-
+                                    f = open("log.txt", "a+")
                                     f.write(time.strftime("%Y-%m-%d %H:%M:%S",
                                                           time.gmtime()) + " draw again \n")
+                                    f.close()
                                     Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3],
                                                      main_return[4])
                                     pre_seat_position = main_return[0]  # set preSeatPosition
                                     time.sleep(20)
                                 else : # same
+                                    f = open("log.txt", "a+")
                                     f.write(time.strftime("%Y-%m-%d %H:%M:%S",
                                                           time.gmtime()) + " don't have to draw again \n")
+                                    f.close()
+                                    time.sleep(20)
 
 
                         # if stop button clicked
                         if switch == False:
+                            f = open("log.txt", "a+")
                             f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : False \n")
+                            f.close()
                             break  # while break
 
                     except Exception as e:
+                        f = open("log.txt", "a+")
                         f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve  Error : %s \n" % e)
+                        f.close()
                         popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요 \n Error :%s" % e)
                         time.sleep(20)
                         print(" ends ")
 
+                f = open("log.txt", "a+")
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : False _ while break\n")
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resovle  Ends\n")
-
-            f.close()
+                f.close()
 
         thread = threading.Thread(target=run)
         thread.start()

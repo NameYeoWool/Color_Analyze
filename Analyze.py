@@ -379,8 +379,9 @@ def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_
     #  one dimension  [ (row, col), status ]
     status = 1;
 
-    seat_width = seat_width * 0.6
-
+    # to avoid overlay
+    seat_width = seat_width *0.8
+    seat_height = seat_height * 0.8
     for i in range(len(seatPosition)):
         row = int(seatPosition[i][0][0])  # tuple -> int to operand with int
         col = int(seatPosition[i][0][1])
