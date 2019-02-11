@@ -389,6 +389,8 @@ def popupmsg(msg):
 
 root = tk.Tk()
 root.lift()
+root.attributes('-topmost', True)
+root.after_idle(root.attributes, '-topmost', False)
 my_gui = GUI(root)
 
 root.mainloop()
