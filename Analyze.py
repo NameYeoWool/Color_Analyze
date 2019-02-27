@@ -61,16 +61,24 @@ def main():
     # because the layout is not simple
     # so, we assume that first column line is simple
     # noise, seat size
-    crop_img,noise_row, seat_width =  findStandard(thresh, arr_ver, ROW )
-    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Beginning   noise row : %f, seat_width  : %f \n"
-            % (noise_row, seat_width))
+
+    # To set noise values( row, col), need one column or one row
+    # but sometimes  column has the noise ( some characters over the layout)
+    # so if we set column as standard, some cases can't be analyzed
+    # set row as standard ( but in some cases, first row line is not simple )
+
+    crop_img, noise_column, seat_height = findStandard(thresh, arr_row,VERTICAL)
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Beginning   noise_column : %f, seat_height  : %f \n"
+            % (noise_column, seat_height))
 
     # print("noise row  : " , noise_row)
     # print(seat_width)
-    crop_img_arr_row = np.sum(crop_img, axis=1).tolist()  ## y축 기준 histogram
-    _, noise_column, seat_height =  findStandard(crop_img, crop_img_arr_row,VERTICAL)  # noise, seat_height
-    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Beginning   noise_column : %f, seat_height  : %f \n"
-            % (noise_column, seat_height))
+
+
+    crop_img_arr_ver = np.sum(crop_img,axis=0).tolist()
+    _, noise_row, seat_width = findStandard(crop_img, crop_img_arr_ver,ROW)
+    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Beginning   noise row : %f, seat_width  : %f \n"
+            % (noise_row, seat_width))
 
     #print(seat_height)
 

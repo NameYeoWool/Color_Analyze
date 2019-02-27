@@ -30,6 +30,7 @@ class GUI:
         
         self.label = tk.Label(master)
 
+        self.status = tk.Label(master,text="상태 : 멈춤")
         self.areaBtn = tk.Button(master,text="영역 지정", command=lambda: GUI.grab_area(self, self.label))
         self.startBtn = tk.Button(master, text="시작", command= self.switchon)
         self.endBtn = tk.Button(master, text="중지", command=self.switchoff)
@@ -37,7 +38,6 @@ class GUI:
         self.setBtn = tk.Button(master ,width= 20,text="좌석 개수 확정", command=self.setSeatCnt)
         self.resetBtn = tk.Button(master,width= 20, text="좌석 개수 재설정", command=self.unsetSeatCnt)
         self.helpBtn = tk.Button(master,width= 20, text="사용법", command=popuphelp)
-
 
         self.areaLabel = tk.Label(master,text="입력 없음")
 
@@ -53,7 +53,7 @@ class GUI:
 
 
         coords = tk.StringVar()
-
+        self.status.pack(sid=tk.TOP)
         self.startBtn.pack(side=tk.TOP,anchor=tk.W,fill=tk.X)
         self.endBtn.pack(side=tk.TOP,anchor=tk.W,fill=tk.X )
         self.setBtn.pack(side=tk.TOP,anchor=tk.W)
@@ -76,7 +76,7 @@ class GUI:
                 f.close()
                 try:
                     print('test...test...')
-
+                    self.status.config(text="상태 : 테스트( 계속 진행하시려면 \n'좌석 개수 확정' 버튼을 누른 다음\n '시작'버튼을 눌러주세요 )")
                     f = open("log.txt", "a+")
                     f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Test..... Test...\n")
                     f.close()
@@ -100,6 +100,8 @@ class GUI:
                     self.canvas.update_idletasks()
 
                 except Exception as e:
+                    self.status.config(text="상태 : 영역이 잘못 지정되었습니다.")
+
                     f = open("log.txt", "a+")
                     f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Test  Error : %s \n"%e)
                     f.close()
@@ -125,6 +127,9 @@ class GUI:
                     f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve.... Resolve... \n")
                     f.close()
                     try:
+
+                        self.status.config(text="상태 : 작동 중")
+
                         main_return = Analyze.main()
                         # detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
                         cnt_seat, cnt_avail, cnt_unavail = Analyze.detectAppendSeatStatus(main_return[0], main_return[1],
@@ -137,7 +142,7 @@ class GUI:
                             f.close()
 
                             popupmsg("좌석 개수가 지정한 개수와 맞지 않습니다.\n좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
-                            time.sleep(20)
+                            time.sleep(5)
                             continue
                         # draw the seat layout and fill the color
                         else:
@@ -154,7 +159,7 @@ class GUI:
                                 # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
                                 Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
                                 pre_seat_position = main_return[0] # set preSeatPosition
-                                time.sleep(20)
+                                time.sleep(5)
 
                             else: # not empty
                                 f = open("log.txt", "a+")
@@ -195,17 +200,18 @@ class GUI:
                                     Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3],
                                                      main_return[4])
                                     pre_seat_position = main_return[0]  # set preSeatPosition
-                                    time.sleep(20)
+                                    time.sleep(5)
                                 else : # same
                                     f = open("log.txt", "a+")
                                     f.write(time.strftime("%Y-%m-%d %H:%M:%S",
                                                           time.gmtime()) + " don't have to draw again \n")
                                     f.close()
-                                    time.sleep(20)
+                                    time.sleep(5)
 
 
                         # if stop button clicked
                         if switch == False:
+
                             f = open("log.txt", "a+")
                             f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : False \n")
                             f.close()
@@ -216,7 +222,7 @@ class GUI:
                         f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve  Error : %s \n" % e)
                         f.close()
                         popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요 \n Error :%s" % e)
-                        time.sleep(20)
+                        time.sleep(5)
                         print(" ends ")
 
                 f = open("log.txt", "a+")
@@ -236,6 +242,7 @@ class GUI:
 
     def switchoff(self):
         print('switch off')
+        self.status.config(text="상태 : 멈춤")
         global switch
         switch = False
 
@@ -379,10 +386,19 @@ def popupmsg(msg):
     root.attributes('-topmost', True)
     root.after_idle(root.attributes, '-topmost', False)
 
+
+    var =tk.IntVar()
+
     popup.wm_title("!")
     popup.tkraise(root)  # This just tells the message to be on top of the root window.
     tk.Label(popup, text=msg).pack(side="top", fill="x", pady=10)
-    tk.Button(popup, text="Okay", command=popup.destroy).pack()
+    # tk.Button(popup, text="Okay", command=popup.destroy).pack()
+
+    # wait for user response
+    btn = tk.Button(popup, text="확인", command=lambda : var.set(1))
+    btn.pack()
+    btn.wait_variable(var) # wait for user press button
+    popup.destroy()   # after btn get number, destory popup
     # Notice that you do not use mainloop() here on the Toplevel() window
 
 
