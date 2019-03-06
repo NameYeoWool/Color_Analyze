@@ -9,7 +9,9 @@ import tkinter as tk
 import pyautogui
 import win32api
 import Analyze
-
+from datetime import datetime
+import json
+import requests
 
 class GUI:
     def __init__(self, master):
@@ -72,13 +74,13 @@ class GUI:
             # before seat Count set
             if(setSeat == False):
                 f = open("log.txt", "a+")
-                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " setSeat : False \n")
+                f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " setSeat : False \n")
                 f.close()
                 try:
                     print('test...test...')
                     self.status.config(text="상태 : 테스트( 계속 진행하시려면 \n'좌석 개수 확정' 버튼을 누른 다음\n '시작'버튼을 눌러주세요 )")
                     f = open("log.txt", "a+")
-                    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " Test..... Test...\n")
+                    f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " Test..... Test...\n")
                     f.close()
 
                     main_return = Analyze.main()
@@ -103,28 +105,28 @@ class GUI:
                     self.status.config(text="상태 : 영역이 잘못 지정되었습니다.")
 
                     f = open("log.txt", "a+")
-                    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Test  Error : %s \n"%e)
+                    f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "  Test  Error : %s \n"%e)
                     f.close()
                     popupmsg("영역이 잘못 지정 되었습니다. 다시 진행해주세요 \n Error : %s" % e)
 
                 f = open("log.txt", "a+")
-                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Test  Ends\n" )
+                f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "  Test  Ends\n" )
                 f.close()
                 print("test ends ")
 
             # After seat Count set
             else:
                 f = open("log.txt", "a+")
-                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " setSeat : True \n")
+                f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " setSeat : True \n")
                 f.close()
                 pre_seat_position = [] #initialize
 
                 while (switch == True):
                     f = open("log.txt", "a+")
-                    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : True \n")
+                    f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " switch : True \n")
                     GUI.stuff(self)
                     print('resolve...resolve...')
-                    f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve.... Resolve... \n")
+                    f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "  Resolve.... Resolve... \n")
                     f.close()
                     try:
 
@@ -138,19 +140,20 @@ class GUI:
                         # handle  popup, another page, etc ....
                         if( cnt_seat != self.seatCnt):
                             f = open("log.txt", "a+")
-                            f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " cnt_seat != self.seatCnt\n")
+                            f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " cnt_seat != self.seatCnt\n")
                             f.close()
 
                             popupmsg("좌석 개수가 지정한 개수와 맞지 않습니다.\n좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
-                            time.sleep(5)
+                            time.sleep(20)
                             continue
                         # draw the seat layout and fill the color
                         else:
                             f = open("log.txt", "a+")
-                            f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " cnt_seat == self.seatCnt\n")
+                            f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " cnt_seat == self.seatCnt\n")
                             f.close()
                             # if seatStatus is not changed,
                             # don't have to draw again
+                            # check it's first time or not ( first time, draw seat )
                             if not pre_seat_position : # empty
                                 f = open("log.txt", "a+")
                                 f.write(
@@ -158,9 +161,13 @@ class GUI:
                                 f.close()
                                 # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
                                 Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
-                                pre_seat_position = main_return[0] # set preSeatPosition
-                                time.sleep(5)
 
+                                pre_seat_position = main_return[0] # set preSeatPosition
+                                jsonRequest(main_return[0],cnt_seat,cnt_avail) # request to server
+                                time.sleep(20)
+
+                            # not first time,
+                            # check whether seat status are changed or not
                             else: # not empty
                                 f = open("log.txt", "a+")
                                 f.write(
@@ -176,7 +183,7 @@ class GUI:
                                 status = 1
                                 same = True
                                 f = open("log.txt", "a+")
-                                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " check pre and now SeatPosition \n")
+                                f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " check pre and now SeatPosition \n")
                                 f.close()
 
 
@@ -199,35 +206,36 @@ class GUI:
                                     f.close()
                                     Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3],
                                                      main_return[4])
+                                    jsonRequest(main_return[0], cnt_seat, cnt_avail)  # request to server
                                     pre_seat_position = main_return[0]  # set preSeatPosition
-                                    time.sleep(5)
+                                    time.sleep(20)
                                 else : # same
                                     f = open("log.txt", "a+")
                                     f.write(time.strftime("%Y-%m-%d %H:%M:%S",
                                                           time.gmtime()) + " don't have to draw again \n")
                                     f.close()
-                                    time.sleep(5)
+                                    time.sleep(20)
 
 
                         # if stop button clicked
                         if switch == False:
 
                             f = open("log.txt", "a+")
-                            f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : False \n")
+                            f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " switch : False \n")
                             f.close()
                             break  # while break
 
                     except Exception as e:
                         f = open("log.txt", "a+")
-                        f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resolve  Error : %s \n" % e)
+                        f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "  Resolve  Error : %s \n" % e)
                         f.close()
                         popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요 \n Error :%s" % e)
-                        time.sleep(5)
+                        time.sleep(20)
                         print(" ends ")
 
                 f = open("log.txt", "a+")
-                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " switch : False _ while break\n")
-                f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + "  Resovle  Ends\n")
+                f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " switch : False _ while break\n")
+                f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "  Resovle  Ends\n")
                 f.close()
 
         thread = threading.Thread(target=run)
@@ -401,6 +409,16 @@ def popupmsg(msg):
     popup.destroy()   # after btn get number, destory popup
     # Notice that you do not use mainloop() here on the Toplevel() window
 
+def jsonRequest(seats,cnt_seat,cnt_avail):
+    # 받아온 dictionary json파일 생성하는 함수
+    fj = open("pc_info.json", "w")
+    dic = {"seats":seats,"total_seats": cnt_seat,"empty_seats": cnt_avail}
+    jsonString = json.dumps(dic, ensure_ascii=False)
+    requests.post('http://13.209.122.73:8000/save/', # 13.209.122.73
+                  data={'data': jsonString, 'pc_room': '스토리 PC LAB'},
+                  files={'seat_image': open('convert.gif', 'rb')})
+    fj.write(jsonString)
+    fj.close()
 
 
 root = tk.Tk()
