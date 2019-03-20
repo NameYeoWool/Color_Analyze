@@ -143,7 +143,7 @@ class GUI:
                             f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " cnt_seat != self.seatCnt\n")
                             f.close()
 
-                            popupmsg("좌석 개수가 지정한 개수와 맞지 않습니다.\n좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
+                            # popupmsg("좌석 개수가 지정한 개수와 맞지 않습니다.\n좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
                             time.sleep(20)
                             continue
                         # draw the seat layout and fill the color
@@ -229,7 +229,7 @@ class GUI:
                         f = open("log.txt", "a+")
                         f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "  Resolve  Error : %s \n" % e)
                         f.close()
-                        popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요 \n Error :%s" % e)
+                        # popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요 \n Error :%s" % e)
                         time.sleep(20)
                         print(" ends ")
 
@@ -357,7 +357,7 @@ class GUI:
             window.update()
 
 def popuphelp():
-    msg ="1. '영역 설정' 버튼을 클릭하세요 " \
+    msg ="1. '영역 지정' 버튼을 클릭하세요 \n (캡처할 영역을 드래그하여 설정해 주세요)" \
          "\n2. 하단에 뜨는 캡처 화면이 전체 좌석을 포함하는지 확인하세요" \
          "\n3. 2에서 문제가 없을 시, '시작' 버튼을 눌러 test 하세요" \
          "\n4. 3에서 문제가 없을 시, '좌석 개수 확정' 버튼을 클릭하세요" \
@@ -386,7 +386,7 @@ def popupmsg(msg):
 
     # This seems to draw the window frame immediately, so only call deiconify()
     # after setting correct window position
-    root.deiconify()
+    # root.deiconify()
 
 
     # when the window is generated
@@ -400,12 +400,13 @@ def popupmsg(msg):
     popup.wm_title("!")
     popup.tkraise(root)  # This just tells the message to be on top of the root window.
     tk.Label(popup, text=msg).pack(side="top", fill="x", pady=10)
-    # tk.Button(popup, text="Okay", command=popup.destroy).pack()
+    tk.Button(popup, text="Okay", command=popup.destroy).pack()
 
     # wait for user response
-    btn = tk.Button(popup, text="확인", command=lambda : var.set(1))
-    btn.pack()
-    btn.wait_variable(var) # wait for user press button
+    # btn = tk.Button(popup, text="확인", command=lambda : var.set(1))
+    # btn.pack()
+    # btn.wait_variable(var) # wait for user press button
+    time.sleep(20)
     popup.destroy()   # after btn get number, destory popup
     # Notice that you do not use mainloop() here on the Toplevel() window
 
@@ -415,7 +416,8 @@ def jsonRequest(seats,cnt_seat,cnt_avail):
     dic = {"seats":seats,"total_seats": cnt_seat,"empty_seats": cnt_avail}
     jsonString = json.dumps(dic, ensure_ascii=False)
     requests.post('http://13.209.122.73:8000/save/', # 13.209.122.73
-                  data={'data': jsonString, 'pc_room': '스토리 PC LAB'},
+                  # data={'data': jsonString, 'pc_room': '스토리 PC LAB'},
+                  data={'data': jsonString, 'pc_room': '세븐 PC방'},
                   files={'seat_image': open('convert.gif', 'rb')})
     fj.write(jsonString)
     fj.close()
