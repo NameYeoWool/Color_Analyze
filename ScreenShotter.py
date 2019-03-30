@@ -144,7 +144,7 @@ class GUI:
                             f.close()
 
                             # popupmsg("좌석 개수가 지정한 개수와 맞지 않습니다.\n좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요")
-                            time.sleep(20)
+                            time.sleep(5)
                             continue
                         # draw the seat layout and fill the color
                         else:
@@ -180,12 +180,12 @@ class GUI:
                                 # seat Position element
                                 #  two dimension  [ [ ] , [] , [] , ..... [] ]
                                 #  one dimension [ (row, col) , status ]
-                                status = 1
+
                                 same = True
                                 f = open("log.txt", "a+")
                                 f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + " check pre and now SeatPosition \n")
                                 f.close()
-
+                                status = 1
 
                                 for index in range(len(now_seat_position)):
                                     if now_seat_position[index][status] == pre_seat_position[index][status]:
@@ -230,7 +230,7 @@ class GUI:
                         f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "  Resolve  Error : %s \n" % e)
                         f.close()
                         # popupmsg("좌석 화면을 맨 앞에 띄워주세요 또는 화면을 다시 지정해주세요 \n Error :%s" % e)
-                        time.sleep(20)
+                        time.sleep(5)
                         print(" ends ")
 
                 f = open("log.txt", "a+")
