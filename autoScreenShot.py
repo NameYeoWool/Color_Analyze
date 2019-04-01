@@ -4,10 +4,19 @@ import numpy as np
 import pyautogui
 import time
 import Analyze
+import json
+import requests
+import matplotlib.pyplot as plt #importing matplotlib
 
 def main():
+    # when first started,
+    # wait 1 minutes ( beacuse the manager program started )
+    time.sleep(60)
     while True:
         try:
+            pic = pyautogui.screenshot()
+            pic.save('Screenshot.png')
+
             imageProcessing() # get seat layout
             res_anlayze = Analyze.main()
 
@@ -19,7 +28,7 @@ def main():
             pre_seat_position = []
             if not pre_seat_position:
                 pre_seat_position = res_anlayze[0]  # set preSeatPosition
-                Analyze.jsonRequest(res_anlayze[0], cnt_seat, cnt_avail)  # request to server
+                #jsonRequest(res_anlayze[0], cnt_seat, cnt_avail)  # request to server
                 Analyze.drawSeat(res_anlayze[0], res_anlayze[1], res_anlayze[2], res_anlayze[3], res_anlayze[4])
             else : # not empty
                 # check seat status
@@ -42,21 +51,38 @@ def main():
                     # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
                     Analyze.drawSeat(res_anlayze[0], res_anlayze[1], res_anlayze[2], res_anlayze[3],
                                      res_anlayze[4])
-                    Analyze.jsonRequest(res_anlayze[0], cnt_seat, cnt_avail)  # request to server
+                    # jsonRequest(res_anlayze[0], cnt_seat, cnt_avail)  # request to server
                     pre_seat_position = res_anlayze[0]  # set preSeatPosition
 
 
             # end  ( compare pre and now seat status )
-            time.sleep(20)
-        except:
-            time.sleep(5)
 
+            time.sleep(20)
+            # print("suc")
+            # break
+        except Exception as e:
+            # print("not %s" %e)
+            time.sleep(4)
+            # break
+
+
+def jsonRequest(seats,cnt_seat,cnt_avail):
+    # 받아온 dictionary json파일 생성하는 함수
+    fj = open("pc_info.json", "w")
+    dic = {"seats":seats,"total_seats": cnt_seat,"empty_seats": cnt_avail}
+    jsonString = json.dumps(dic, ensure_ascii=False)
+    requests.post('http://13.209.122.73:8000/save/', # 13.209.122.73
+                  # data={'data': jsonString, 'pc_room': '스토리 PC LAB'},
+                  data={'data': jsonString, 'pc_room': '세븐 PC방'},
+                  files={'seat_image': open('convert.gif', 'rb')})
+    fj.write(jsonString)
+    fj.close()
 
 def imageProcessing():
-    pic = pyautogui.screenshot()
-    pic.save('Screenshot.png')
 
-    image = cv2.imread("screenshot.png", 0)  # 뒤의 0은 gray 색으로 바꾼것을 의미
+    image = cv2.imread("full_story.png", 0)  # 뒤의 0은 gray 색으로 바꾼것을 의미
+    origin_image = cv2.imread("full_story.png")
+
     fullImage_height, fullImage_width = image.shape[:2]
 
     ret, thresh0 = cv2.threshold(image, 85, 255, cv2.THRESH_TRUNC)  # by THRESH_TRUNC OPTION
@@ -78,8 +104,8 @@ def imageProcessing():
     max_ver = max(arr_ver)
 
     # standard value ( max_ver * 0.9 )  90%
-    standard_ver = max_ver * 0.9
-
+    standard_ver = max_ver * 0.85
+    # print(standard_ver)
 
     # narrow range
     # if the value is over  max* 0.9, except that value
@@ -93,6 +119,7 @@ def imageProcessing():
     #  ( half :  height(= len(arr_ver)) * 0.5 )
     #  it's cut point because seat layout height is over than half
     ver_cutPoint = findCutPoint(arr_ver, ver_sections_overStandard)
+    # print(ver_cutPoint)
     width = ver_cutPoint[1] - ver_cutPoint[0]   # seat layout width
 
     # print(findVerCutPoint(arr_ver, ver_sections_overStandard))
@@ -100,6 +127,9 @@ def imageProcessing():
 
     # cut Image
     cutImage = thresh[0:len(arr_ver)-1 ,
+          ver_cutPoint[0]:ver_cutPoint[0] + width]
+
+    origin_image = origin_image[0:len(arr_ver)-1 ,
           ver_cutPoint[0]:ver_cutPoint[0] + width]
     # cv2.imwrite("roi1.png",cutImage)
 
@@ -120,13 +150,24 @@ def imageProcessing():
     # now row cut
     # get roiImage
     roiImage = cutImage[row_cutPoint[0]:row_cutPoint[0] + height,]
+    # cv2.imshow("roiimage",roiImage)
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
+    origin_image= origin_image[row_cutPoint[0]:row_cutPoint[0] + height,]
 
-    arr_row = np.sum(roiImage, axis=1).tolist()  ## y축 기준 histogram
+
+    arr_row_second = np.sum(roiImage, axis=1).tolist()  ## y축 기준 histogram
+
+    # np.savetxt("arr_row", arr_row, fmt='%f')
+    # plt.plot(arr_row_second)
+    # plt.savefig("arr_row"+"_plot.png")
+    # plt.show()
+
 
     # to check pattern
     # find zero to zero sections
-    zeroSections = findZeroToZero(arr_row)
-    print(zeroSections)
+    zeroSections = findZeroToZero(arr_row_second)
+    # print(zeroSections)
     first = 0
     second =1
     startPoint = 0
@@ -136,13 +177,14 @@ def imageProcessing():
     # if true, some noise exist ( ex : tab of seat layout )
     # so cut that noise
     if secondBigPatternExist(zeroSections):
-        print("in")
+        # print("in")
         height = height -  ( zeroSections[second][startPoint] - zeroSections[first][startPoint])
         roiImage = roiImage[zeroSections[second][startPoint]: zeroSections[second][startPoint] + height]
+        origin_image= origin_image[zeroSections[second][startPoint]: zeroSections[second][startPoint] + height]
 
     # set image name as "image.png"
     # Analyze file read file name "image.png"
-    cv2.imwrite("image.png", roiImage)
+    cv2.imwrite("image.png", origin_image)
 
 
 def secondBigPatternExist(sections):
@@ -245,4 +287,5 @@ def findSectionsOverStandard(arr, standard):
 
     return sections
 
-main()
+imageProcessing()
+# main()
