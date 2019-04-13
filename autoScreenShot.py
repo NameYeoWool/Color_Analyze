@@ -6,16 +6,24 @@ import time
 import Analyze
 import json
 import requests
+import os
 import matplotlib.pyplot as plt #importing matplotlib
+from datetime import datetime
 
 def main():
     # when first started,
     # wait 1 minutes ( beacuse the manager program started )
-    time.sleep(60)
+    # time.sleep(60)
+    time.sleep(5)
+    mp4Dir = "/watcherdemon"
+    if not os.path.isdir(mp4Dir):
+        os.mkdir(mp4Dir)
+        print("mkdir")
+
     while True:
         try:
             pic = pyautogui.screenshot()
-            pic.save('Screenshot.png')
+            pic.save('C:\\watcherdemon\\Screenshot.png')
 
             imageProcessing() # get seat layout
             res_anlayze = Analyze.main()
@@ -28,7 +36,7 @@ def main():
             pre_seat_position = []
             if not pre_seat_position:
                 pre_seat_position = res_anlayze[0]  # set preSeatPosition
-                #jsonRequest(res_anlayze[0], cnt_seat, cnt_avail)  # request to server
+                jsonRequest(res_anlayze[0], cnt_seat, cnt_avail)  # request to server
                 Analyze.drawSeat(res_anlayze[0], res_anlayze[1], res_anlayze[2], res_anlayze[3], res_anlayze[4])
             else : # not empty
                 # check seat status
@@ -51,46 +59,55 @@ def main():
                     # drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_width):
                     Analyze.drawSeat(res_anlayze[0], res_anlayze[1], res_anlayze[2], res_anlayze[3],
                                      res_anlayze[4])
-                    # jsonRequest(res_anlayze[0], cnt_seat, cnt_avail)  # request to server
+                    jsonRequest(res_anlayze[0], cnt_seat, cnt_avail)  # request to server
                     pre_seat_position = res_anlayze[0]  # set preSeatPosition
 
 
             # end  ( compare pre and now seat status )
+            f = open("log.txt", "a+")
+            f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "  success " )
+            f.close()
 
-            time.sleep(20)
-            # print("suc")
-            # break
+            # time.sleep(20)
+            print("suc")
+            break
         except Exception as e:
-            # print("not %s" %e)
-            time.sleep(4)
-            # break
+
+            f = open("log.txt", "a+")
+            f.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "  Error : %s \n" % e)
+            f.close()
+            # time.sleep(5)
+
+            print("not %s" %e)
+            break
 
 
 def jsonRequest(seats,cnt_seat,cnt_avail):
     # 받아온 dictionary json파일 생성하는 함수
-    fj = open("pc_info.json", "w")
+    fj = open("C:\\watcherdemon\\pc_info.json", "w")
     dic = {"seats":seats,"total_seats": cnt_seat,"empty_seats": cnt_avail}
     jsonString = json.dumps(dic, ensure_ascii=False)
-    requests.post('http://13.209.122.73:8000/save/', # 13.209.122.73
+    # requests.post('http://13.209.122.73:8000/save/', # 13.209.122.73
+    requests.post('http://www.watcherapp.net:8000/save/',
                   # data={'data': jsonString, 'pc_room': '스토리 PC LAB'},
-                  data={'data': jsonString, 'pc_room': '세븐 PC방'},
-                  files={'seat_image': open('convert.gif', 'rb')})
+                  data={'data': jsonString, 'pc_room': '스토리 PC LAB_장안구'},
+                  files={'seat_image': open('C:\\watcherdemon\\convert.gif', 'rb')})
     fj.write(jsonString)
     fj.close()
 
 def imageProcessing():
 
-    image = cv2.imread("full_story.png", 0)  # 뒤의 0은 gray 색으로 바꾼것을 의미
-    origin_image = cv2.imread("full_story.png")
+    image = cv2.imread("C:\\watcherdemon\\Screenshot.png", 0)  # 뒤의 0은 gray 색으로 바꾼것을 의미
+    origin_image = cv2.imread("C:\\watcherdemon\\Screenshot.png")
 
     fullImage_height, fullImage_width = image.shape[:2]
 
-    ret, thresh0 = cv2.threshold(image, 85, 255, cv2.THRESH_TRUNC)  # by THRESH_TRUNC OPTION
+    ret, thresh0 = cv2.threshold(image, 89, 255, cv2.THRESH_TRUNC)  # by THRESH_TRUNC OPTION
     ret, thresh = cv2.threshold(thresh0.copy(), 0, 255,
                                 cv2.THRESH_BINARY + cv2.THRESH_OTSU)  # one more threshold by THRESH_BINARY+cv2.THRESH_OTSU OPTION
 
     # cv2.imshow("image",thresh)
-    # cv2.imwrite("thresh.png", thresh)  # for debug
+    cv2.imwrite("C:\\watcherdemon\\thresh.png", thresh)  # for debug
     # cv2.waitKey()
     # cv2.destroyAllWindows()
 
@@ -184,7 +201,7 @@ def imageProcessing():
 
     # set image name as "image.png"
     # Analyze file read file name "image.png"
-    cv2.imwrite("image.png", origin_image)
+    cv2.imwrite("C:\\watcherdemon\\image.png", origin_image)
 
 
 def secondBigPatternExist(sections):
@@ -287,5 +304,15 @@ def findSectionsOverStandard(arr, standard):
 
     return sections
 
-imageProcessing()
 # main()
+# jsonRequest()
+imageProcessing()
+
+res_anlayze = Analyze.main()
+
+# detectAppendSeatStatus(seatPosition,fullImage_height,fullImage_width, seat_height, seat_width)
+cnt_seat, cnt_avail, cnt_unavail = Analyze.detectAppendSeatStatus(res_anlayze[0], res_anlayze[1],
+                                                                  res_anlayze[2], res_anlayze[3],
+                                                                  res_anlayze[4])
+Analyze.drawSeat(res_anlayze[0], res_anlayze[1], res_anlayze[2], res_anlayze[3],
+                 res_anlayze[4])

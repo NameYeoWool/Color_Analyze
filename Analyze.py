@@ -40,7 +40,7 @@ def main():
 
     # the point threshhold ( now 70 ) can be modified depending on situationo( depending on screenshot )
     # 70 is appropriate  seven, story  screen shot
-    ret, thresh0 = cv2.threshold(image, 85, 255, cv2.THRESH_TRUNC) #  by THRESH_TRUNC OPTION
+    ret, thresh0 = cv2.threshold(image, 80, 255, cv2.THRESH_TRUNC) #  by THRESH_TRUNC OPTION  # 89: story  # 80 seven
     ret,thresh = cv2.threshold(thresh0.copy(),0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU) # one more threshold by THRESH_BINARY+cv2.THRESH_OTSU OPTION
 
     # cv2.imshow("image",thresh)
@@ -222,7 +222,7 @@ def main():
             arr_third_row = np.sum(second_crop_img, axis=ROW).tolist()
             arr_third_column = np.sum(second_crop_img, axis=VERTICAL).tolist()
 
-            np.savetxt("arr_third_row", arr_third_row, fmt='%f')
+            # np.savetxt("arr_third_row", arr_third_row, fmt='%f')
 
             row_third_start, row_third_end = pointStartEnd(arr_third_row, noise_row)
 
@@ -575,7 +575,7 @@ def findStandard(thresh_img, arr_row,orientation):
     # plt.savefig(name+"_plot.png")
     # plt.show()
 
-    np.savetxt(name, arr_sum, fmt='%f')
+    # np.savetxt(name, arr_sum, fmt='%f')
     #print(max)
 
     return crop_img,max*0.6, seat_value  # noiseValue, seatSizeValue

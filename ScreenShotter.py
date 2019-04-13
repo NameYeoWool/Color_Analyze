@@ -94,8 +94,8 @@ class GUI:
                     Analyze.drawSeat(main_return[0], main_return[1], main_return[2], main_return[3], main_return[4])
 
                     # Read an image from my Desktop
-                    path = os.getcwd() # path now
-                    self.image = Image.open(path+"\\convert_thumbnail.gif")
+                    # path = os.getcwd() # path now
+                    self.image = Image.open("convert_thumbnail.gif")
                     self.photo = ImageTk.PhotoImage(self.image)
                     # Create the image on the Canvas
                     self.canvas.create_image(0,0,image=self.photo,anchor = tk.NW)
@@ -279,6 +279,11 @@ class GUI:
             box[i] = int(box[i])
         #print(box)
         try:
+            mp4Dir = "/watcherdemon"
+            if not os.path.isdir(mp4Dir):
+                os.mkdir(mp4Dir)
+                print("mkdir")
+
             im=ImageGrab.grab(bbox=(box[0],box[1],box[2],box[3]))
             print("x1 :",box[0], "     y1 :" ,box[1],"     x2 :" ,box[2],"     y2 : " ,box[3])
             self.areaLabel.config(text=str(box))
@@ -415,9 +420,13 @@ def jsonRequest(seats,cnt_seat,cnt_avail):
     fj = open("pc_info.json", "w")
     dic = {"seats":seats,"total_seats": cnt_seat,"empty_seats": cnt_avail}
     jsonString = json.dumps(dic, ensure_ascii=False)
-    requests.post('http://13.209.122.73:8000/save/', # 13.209.122.73
-                  # data={'data': jsonString, 'pc_room': '스토리 PC LAB'},
-                  data={'data': jsonString, 'pc_room': '세븐 PC방'},
+    # requests.post('http://13.209.122.73:8000/save/', # 13.209.122.73
+    requests.post('http://www.watcherapp.net:8000/save/',
+    # requests.post('http://13.125.74.250:8000/save/', # 13.209.122.73
+    #               data={'data': jsonString, 'pc_room': '스토리 PC LAB_장안구'},
+    #               data={'data': jsonString, 'pc_room': '세븐 PC방_종로구'},
+    #               data={'data': jsonString, 'pc_room': '라이또 PC방_장안구'},
+                  data={'data': jsonString, 'pc_room': 'Gallery PC방_장안구'},
                   files={'seat_image': open('convert.gif', 'rb')})
     fj.write(jsonString)
     fj.close()
