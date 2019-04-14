@@ -426,7 +426,8 @@ def jsonRequest(seats,cnt_seat,cnt_avail):
     #               data={'data': jsonString, 'pc_room': '스토리 PC LAB_장안구'},
     #               data={'data': jsonString, 'pc_room': '세븐 PC방_종로구'},
     #               data={'data': jsonString, 'pc_room': '라이또 PC방_장안구'},
-                  data={'data': jsonString, 'pc_room': 'Gallery PC방_장안구'},
+    #               data={'data': jsonString, 'pc_room': 'Gallery PC방_장안구'},
+                  data={'data': jsonString, 'pc_room': '헌터 PC방_장안구'},
                   files={'seat_image': open('convert.gif', 'rb')})
     fj.write(jsonString)
     fj.close()
