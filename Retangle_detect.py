@@ -21,9 +21,9 @@ def main():
     ret, thresh = cv2.threshold(thresh, 14, 255,    # 헌터 : 10
                                      cv2.THRESH_BINARY_INV)  # by binary inverse
 
-    cv2.imshow("thresh",thresh)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+    # cv2.imshow("thresh",thresh)
+    #     # cv2.waitKey()
+    #     # cv2.destroyAllWindows()
 
     # 갤러리 pc방
     # ret, thresh = cv2.threshold(thresh, 66, 255,cv2.THRESH_TRUNC)  # by THRESH_TRUNC OPTION  # 89: story  # 80 seven
@@ -42,8 +42,9 @@ def main():
 
     # redraw outline by courturs
     img = cv2.drawContours(img, contours, -1, (0, 0, 0), 3)
-    cv2.imshow("drawContours", img)
-    cv2.waitKey()
+
+    # cv2.imshow("drawContours", img)
+    # cv2.waitKey()
     # cv2.destroyAllWindows()
 
     # to handle the case that the shape is not closed
@@ -53,9 +54,9 @@ def main():
         # redraw
         img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 0), 3)  # black color, line wide(굴기) 3
 
-    cv2.imshow("redraw",img)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+    # cv2.imshow("redraw",img)
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
 
     # After draw line again
     # get contours(=lines) again
@@ -82,13 +83,15 @@ def main():
 
         if seat_height == 0 : seat_height = h
         if seat_width ==0 : seat_width = w
+        seatPositions.append( [ (y,x) ] ) # [ 좌표, status ]
 
-
+    detectAppendSeatStatus(seatPositions,fullImage_height,fullImage_width,seat_height, seat_width)
 
 
         # be careful , y is first and x is second
-        seatPositions.append( [ (y,x) , detectSeatStatus(origin_image[y: y + h, x: x + w] ) ] )  # [ 좌표, status ]
-        count = count + 1
+        # status = detectSeatStatus(origin_image[y: y + h, x: x + w] )
+        # seatPositions.append( [ (y,x) , status ] ) # [ 좌표, status ]
+        # count = count + 1
         # cv2.imwrite("C:\\Users\\aaa\\PycharmProjects\\Color_Analyze\\output\\Img" + str(count) + ".jpg", img[y: y + h, x: x + w])
 
 
@@ -135,6 +138,49 @@ def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_
     image.resize((200, 150)).save("convert_thumbnail.gif")
 
     return
+
+def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_height, seat_width):
+
+    r =0
+    c =1
+
+    v_Standard = 100
+    cnt_seat = 0
+    cnt_unavail = 0
+    cnt_avail = 0
+
+    origin_image = cv2.imread("image.png")
+    # seat Position element
+    #  two dimension  [ [ ] , [] , [] , ..... [] ]
+    #  one dimension  [ (row, col) ]
+    #  we want to append status in one dimension [ (row, col) , status ]
+    #  status mean this is available or not
+    for i in range(len(seatPosition)):
+        cnt_seat += 1
+        # define ROI of RGB image 'img'
+        # '0' mean first element of one dimension
+        # that is tuple
+        roi = origin_image[seatPosition[i][0][r]:seatPosition[i][0][r]+seat_height, seatPosition[i][0][c]:seatPosition[i][0][c]+seat_width]
+
+        # cv2.imshow("roi",roi)
+        # cv2.waitKey()
+        # cv2.destroyAllWindows()
+
+
+        # convert it into HSV
+        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv)
+
+        v_mean = np.mean(v)
+
+        if v_mean > v_Standard : # seat unavailable
+            seatPosition[i].append(UNAVAILABLE)      # [ (row, col), status ]
+            cnt_unavail += 1
+        else:
+            seatPosition[i].append(AVAILABLE)
+            cnt_avail += 1
+
+    return cnt_seat, cnt_avail,cnt_unavail
 
 def detectSeatStatus(image):
 

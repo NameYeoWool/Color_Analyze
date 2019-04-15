@@ -40,13 +40,9 @@ def main():
 
     # the point threshhold ( now 70 ) can be modified depending on situationo( depending on screenshot )
     # 70 is appropriate  seven, story  screen shot
-    ret, thresh0 = cv2.threshold(image, 66, 255,cv2.THRESH_TRUNC)  # by THRESH_TRUNC OPTION  # 89: story  # 80 seven
+    ret, thresh0 = cv2.threshold(image, 80, 255,cv2.THRESH_TRUNC)  # by THRESH_TRUNC OPTION  # 89: story  # 80 seven
     ret,thresh = cv2.threshold(thresh0.copy(),0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU) # one more threshold by THRESH_BINARY+cv2.THRESH_OTSU OPTION
 
-    cv2.imshow("thresh",thresh)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
-    exit()
 
     cv2.imwrite("thresh.png",thresh)  #for debug
 
