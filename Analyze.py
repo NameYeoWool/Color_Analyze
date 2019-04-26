@@ -639,4 +639,4 @@ def pointStartEnd(arr,noise):
 # print(cnt_unavail)
 #
 # drawSeat(main_return[0],main_return[1],main_return[2],main_return[3],main_return[4])
-main()
+# main()

@@ -1,4 +1,4 @@
-import imutils
+# import imutils
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -18,12 +18,13 @@ def main():
     img = cv2.imread("image.png")
     thresh = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # 헌터 pc방
-    ret, thresh = cv2.threshold(thresh, 14, 255,    # 헌터 : 10
+    ret, thresh = cv2.threshold(thresh, 14, 255,    #
+                                # 헌터 : 10
                                      cv2.THRESH_BINARY_INV)  # by binary inverse
 
     # cv2.imshow("thresh",thresh)
-    #     # cv2.waitKey()
-    #     # cv2.destroyAllWindows()
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
 
     # 갤러리 pc방
     # ret, thresh = cv2.threshold(thresh, 66, 255,cv2.THRESH_TRUNC)  # by THRESH_TRUNC OPTION  # 89: story  # 80 seven
@@ -43,9 +44,9 @@ def main():
     # redraw outline by courturs
     img = cv2.drawContours(img, contours, -1, (0, 0, 0), 3)
 
-    # cv2.imshow("drawContours", img)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
+    cv2.imshow("drawContours", img)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
 
     # to handle the case that the shape is not closed
     # redraw
@@ -71,21 +72,23 @@ def main():
     seatPositions = []
     seat_height = 0
     seat_width = 0
+    # f = open("log_length.txt",'a+')
     for c in contours:
         if sd.detect(c) != 'rectangle': next
         c = c.astype("float")
         c = c.astype("int")
         x, y, w, h = cv2.boundingRect(c)
-        if (  w < 10 or  h < 10):   # if  small, it's not seat
+        if (  w < 20 or  h < 20):   # if  small, it's not seat
             continue
-        elif( w > 80 or h > 80 ):  # if big, it's not seat
+        elif( w > 110 or h > 110 ):  # if big, it's not seat
             continue
+        # f.write( "w : %d    h : %d\n" %(w,h)   )
 
         if seat_height == 0 : seat_height = h
         if seat_width ==0 : seat_width = w
-        seatPositions.append( [ (y,x) ] ) # [ 좌표, status ]
+        seatPositions.append( [ (y,x) , detectSeatStatus(img[y: y + h, x: x + w])] ) # [ 좌표, status ]
 
-    detectAppendSeatStatus(seatPositions,fullImage_height,fullImage_width,seat_height, seat_width)
+    # detectAppendSeatStatus(seatPositions,fullImage_height,fullImage_width,seat_height, seat_width)
 
 
         # be careful , y is first and x is second
@@ -95,7 +98,8 @@ def main():
         # cv2.imwrite("C:\\Users\\aaa\\PycharmProjects\\Color_Analyze\\output\\Img" + str(count) + ".jpg", img[y: y + h, x: x + w])
 
 
-    drawSeat(seatPositions, fullImage_height,fullImage_width,seat_height, seat_width)
+    # f.close()
+    # drawSeat(seatPositions, fullImage_height,fullImage_width,seat_height, seat_width)
 
     return seatPositions, fullImage_height,fullImage_width,seat_height, seat_width
 
@@ -103,6 +107,9 @@ def drawSeat(seatPosition, fullImage_height, fullImage_width, seat_height, seat_
 
     image = Image.new("RGB", (fullImage_width , fullImage_height), (0,0,0))
     draw = ImageDraw.Draw(image)
+
+    seat_width = seat_width * 0.8
+    seat_height = seat_height * 0.8
 
     # here seatPosition list has the status
     # seatPosition element
@@ -161,11 +168,6 @@ def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_
         # '0' mean first element of one dimension
         # that is tuple
         roi = origin_image[seatPosition[i][0][r]:seatPosition[i][0][r]+seat_height, seatPosition[i][0][c]:seatPosition[i][0][c]+seat_width]
-
-        # cv2.imshow("roi",roi)
-        # cv2.waitKey()
-        # cv2.destroyAllWindows()
-
 
         # convert it into HSV
         hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
@@ -254,5 +256,4 @@ class ShapeDetector:
             shape = "circle"
         # return the name of the shape
         return shape
-
-main()
+# main()
