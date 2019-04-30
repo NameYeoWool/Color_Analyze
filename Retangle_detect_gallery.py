@@ -72,9 +72,9 @@ def main():
     for c in contours:
         if sd.detect(c) != 'rectangle': next
         x, y, w, h = cv2.boundingRect(c)
-        if w < 20 or w > 100 :  # too  small or too big value is not necesarry /
+        if w < 20 :  # too  small or too big value is not necesarry /
             continue
-        if h < 20 or h > 100:
+        if h < 20 :
             continue
         w_list.append(w)
         h_list.append(h)
@@ -108,7 +108,7 @@ def main():
         # cv2.waitKey()
         # cv2.destroyWindow("crop")
 
-    print("cnt : %d "%now)
+    # print("cnt : %d "%now)
 
     # cv2.imshow("redraw",img)
     # cv2.imshow("img_for_redraw",img_for_redraw)
@@ -122,10 +122,11 @@ def main():
     thresh_redraw = cv2.adaptiveThreshold(img_redraw, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
                                cv2.THRESH_BINARY, 11, 2)
 
+    # cv2.imwrite("th3.png",thresh_redraw)
     # cv2.imshow("th3",thresh_redraw)
     # cv2.waitKey()
     # cv2.destroyAllWindows()
-    #
+
     contours, hierachy = cv2.findContours(thresh_redraw, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
 
@@ -136,6 +137,9 @@ def main():
 
     # read thresh image
     threshForStatus = cv2.imread("thresh.png")
+
+    # cv2.imshow("thresForStatus",threshForStatus)
+    # cv2.waitKey()
 
 
     # to get mode ( 최빈값)
@@ -163,17 +167,40 @@ def main():
     h_mode = modefinder(h_list)
     # print("H mode : %f "% h_mode)
 
+    xyList =[]
     seatPositions = []
     for c in contours:
         if sd.detect(c) != 'rectangle': next
         x, y, w, h = cv2.boundingRect(c)
-        if w <= (w_mode-5) or w > w_mode + 30:  # 5 value is the standard to filter a little small rectangle
+        if w < (w_mode-10) or w > w_mode + 10:  # 5 value is the standard to filter a little small rectangle
+            # crop = threshForStatus[y: y + h, x: x + w]
+            # cv2.imshow("crop", crop)
+            # cv2.waitKey()
+            # cv2.destroyWindow("crop")
+            # print("skp x : %d  y : %d , w : %d,  h: %d" %(x,y,w,h))
             continue
-        if h < (h_mode -5) or h > h_mode + 30:
+        if h < (h_mode -10) or h > h_mode + 10:
+            # crop = threshForStatus[y: y + h, x: x + w]
+            # cv2.imshow("crop", crop)
+            # cv2.waitKey()
+            # cv2.destroyWindow("crop")
+            # print("skp x : %d  y : %d , w : %d,  h: %d" %(x,y,w,h))
             continue
-        # print("x : %d  y : %d , w : %d,  h: %d" %(x,y,w,h))
+
+        if isAgainDraw(xyList,x,y, w_mode, h_mode):
+            # again
+            # print("Again  x : %d  y : %d , w : %d,  h: %d" %(x,y,w,h))
+            continue;
+        else:
+            # not again
+            xyList.append([x,y])
+
+        # print(" x : %d  y : %d , w : %d,  h: %d" %(x,y,w,h))
+        # print(xyList)
+
         # # redraw
-        # img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 3)  # black color, line wide(굴기) 3
+        img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 3)  # black color, line wide(굴기) 3
+
 
         # crop  = threshForStatus[y: y + h, x: x + w]
         # cv2.imshow("crop", crop)
@@ -188,9 +215,24 @@ def main():
         count= count+1
     detectAppendSeatStatus(seatPositions,fullImage_height,fullImage_width,seat_height, seat_width)
 
-    drawSeat(seatPositions, fullImage_height,fullImage_width,seat_height, seat_width)
+    # drawSeat(seatPositions, fullImage_height,fullImage_width,seat_height, seat_width)
 
     return seatPositions, fullImage_height,fullImage_width,seat_height, seat_width
+
+def isAgainDraw( xyList,x,y, W_mode, H_mode):
+    if not xyList: # empty case
+        return False     # not again draw
+
+
+    for element in xyList:
+        x1 = element[0];
+        y1 = element[1];
+
+        if ( ( x > x1 - 10) and ( x < x1 + 10) ) and ( ( y > y1 - 10) and ( y < y1 + 10) ) :
+            return True
+
+    return False
+
 
 def modefinder(numbers): #numbers는 리스트나 튜플 형태의 데이터
     c = Counter(numbers)
@@ -247,9 +289,7 @@ def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_
     c =1
 
 
-    cnt_seat = 0
-    cnt_unavail = 0
-    cnt_avail = 0
+
     origin_image = cv2.imread("image.png")
     thresh = cv2.imread("thresh.png")
 
@@ -257,9 +297,9 @@ def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_
                             # other seat over 160000
 
     arr_thresh = []
-    f = open("log_arr_standard","w+") # w+  매번 새로 만듦
+    # f = open("log_arr_standard","w+") # w+  매번 새로 만듦
     for i in range(len(seatPosition)):
-        cnt_seat += 1
+
         # define ROI of RGB image 'img'
         # '0' mean first element of one dimension
         # that is tuple
@@ -272,10 +312,10 @@ def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_
         arr_thresh.append(arr_sum)
 
     # print(arr_thresh)
-    print("max 0.95 %d"%(np.max(arr_thresh)*0.9))
+    # print("max 0.9 %d"%(np.max(arr_thresh)*0.9))
     arr_standard = np.max(arr_thresh) * 0.9  # seat with icon value is lower than max * 0.95
 
-    f.write("max  * 0. 9  standard value %d  \n"%arr_standard  )
+    # f.write("max  * 0. 9  standard value %d  \n"%arr_standard  )
 
 
     # seat Position element
@@ -283,6 +323,10 @@ def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_
     #  one dimension  [ (row, col) ]
     #  we want to append status in one dimension [ (row, col) , status ]
     #  status mean this is available or not
+
+    cnt_seat = 0
+    cnt_unavail = 0
+    cnt_avail = 0
     for i in range(len(seatPosition)):
         cnt_seat += 1
         # define ROI of RGB image 'img'
@@ -295,12 +339,14 @@ def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_
 
         arr_sum = np.sum(roi_thresh, axis=1).tolist()  ## arr_histogram depending on orientation  row : 1
         arr_mean = np.mean(arr_sum)
-        print("arr_mean %d"%arr_mean)
-        f.write("arr_mean  %d\n"%arr_mean)
+
+        # print("arr_mean %d"%arr_mean)
+        # f.write("arr_mean  %d\n"%arr_mean)
 
         # cv2.imshow("roi",roi_thresh)
         # cv2.waitKey()
         # cv2.destroyAllWindows()
+
 
         # if arr_mean  < arr_standard, it's unavailable
         # some icon and letters down the value ( because it's black color )
@@ -311,7 +357,9 @@ def detectAppendSeatStatus(seatPosition, fullImage_height, fullImage_width,seat_
             seatPosition[i].append(AVAILABLE)
             cnt_avail += 1
 
-    f.close()
+    # f.close()
+
+    # print("cnt_seat : %d , cnt_avail : %d, cnt_unavail : %d"%(cnt_seat,cnt_avail,cnt_unavail))
 
     return cnt_seat, cnt_avail, cnt_unavail
 

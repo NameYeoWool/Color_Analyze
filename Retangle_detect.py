@@ -22,9 +22,9 @@ def main():
                                 # 헌터 : 10
                                      cv2.THRESH_BINARY_INV)  # by binary inverse
 
-    # cv2.imshow("thresh",thresh)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
+    cv2.imshow("thresh",thresh)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
 
     # 갤러리 pc방
     # ret, thresh = cv2.threshold(thresh, 66, 255,cv2.THRESH_TRUNC)  # by THRESH_TRUNC OPTION  # 89: story  # 80 seven
